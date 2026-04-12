@@ -1199,7 +1199,7 @@ function makeHabitCard(h, todayStr, chainId) {
       </svg>
     </div>
   `;
-  if (hasTimer) {
+  if (hasTimer && !isDone) {
     card.querySelector('.habit-timer-btn').addEventListener('click', e => {
       e.stopPropagation();
       const targetSecs = h.targetUnit === '秒' ? h.targetNum : (h.targetNum || 0) * 60;
