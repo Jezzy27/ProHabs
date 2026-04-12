@@ -795,9 +795,9 @@
 <!-- 刪除所有紀錄確認 Modal -->
 <div class="modal-overlay" id="delete-records-modal">
   <div class="modal">
-    <div class="modal-title">確認刪除所有紀錄？</div>
+    <div class="modal-title">確認全部清除？</div>
     <p style="font-size:14px; color:var(--text-sub); line-height:1.7; margin-bottom:4px;">
-      這將清除 <strong style="color:var(--text)">所有習慣</strong> 的打卡紀錄。<br>習慣名稱會保留，但所有歷史資料將永久消失，<strong style="color:#E53935;">無法復原。</strong>
+      所有習慣與打卡紀錄將全部刪除。<br>鏈條設定會保留，其餘資料永久消失，<strong style="color:#E53935;">無法復原。</strong>
     </p>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('delete-records-modal')">取消</button>
@@ -1416,7 +1416,10 @@ function renderManage() {
     section.innerHTML = `
       <div class="chain-section-header">
         <span class="chain-section-name">🔗 ${chain.name}</span>
-        <span class="chain-section-hint">長按拖移排序</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="chain-section-hint">長按拖移排序</span>
+          <button class="btn-sm btn-delete" onclick="deleteChain('${chain.id}')">刪</button>
+        </div>
       </div>
     `;
 
@@ -1757,11 +1760,16 @@ function openDelete(id) {
 }
 function confirmDelete() {
   data.habits = data.habits.filter(x => x.id !== deletingId);
-  // Clean empty chains
-  const usedChains = new Set(data.habits.map(h => h.chain).filter(Boolean));
-  data.chains = data.chains.filter(c => usedChains.has(c.id));
   saveData(data);
   closeModal('delete-modal');
+  renderManage();
+}
+
+function deleteChain(chainId) {
+  // Detach habits from this chain (become standalone)
+  data.habits.forEach(h => { if (h.chain === chainId) h.chain = null; });
+  data.chains = data.chains.filter(c => c.id !== chainId);
+  saveData(data);
   renderManage();
 }
 
@@ -1777,10 +1785,12 @@ function openDeleteRecordsModal() {
 }
 
 function deleteAllRecords() {
-  data.habits.forEach(h => h.records = {});
+  data.habits = [];
   saveData(data);
   closeModal('delete-records-modal');
-  showToast('✅ 所有打卡紀錄已清除');
+  renderToday();
+  renderManage();
+  showToast('✅ 已全部清除');
 }
 
 function exportBackup() {
