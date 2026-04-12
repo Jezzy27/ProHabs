@@ -338,16 +338,15 @@
   .manage-item-body { flex: 1; min-width: 0; }
   .manage-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
   .manage-item-name { font-size: 15px; font-weight: 500; flex: 1; padding-top: 2px; }
+  .tappable-name { cursor: pointer; border-bottom: 1.5px dashed #B0D4B8; display: inline; padding-bottom: 1px; }
   .manage-item-chain { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 99px; margin-top: 6px; display: inline-block; }
   .manage-btns { display: flex; gap: 6px; flex-shrink: 0; }
   .btn-sm {
     padding: 5px 10px; border-radius: 8px; border: none; font-family: inherit;
     font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
   }
-  .btn-rename { background: var(--primary-light); color: var(--primary); }
   .btn-history { background: #E0EDDB; color: var(--text-sub); }
   .btn-delete { background: #FDECEA; color: #E53935; }
-  .btn-chain { background: #E0EDDB; color: var(--text); }
 
   .history-panel {
     margin-top: 12px; border-top: 1px solid #C8DCBF; padding-top: 12px;
@@ -370,16 +369,6 @@
     color: var(--text); max-width: 320px;
   }
 
-  /* Chain assign modal options */
-  .chain-option {
-    padding: 14px 16px; border-radius: var(--radius-btn);
-    border: 2px solid #C8DCBF; margin-bottom: 8px;
-    cursor: pointer; font-size: 15px; font-weight: 500;
-    transition: all 0.15s;
-  }
-  .chain-option:active, .chain-option.selected {
-    border-color: var(--primary); background: var(--primary-light); color: var(--primary);
-  }
 
   /* Add new habit */
   .add-section { margin: 16px 16px 0; }
@@ -468,10 +457,24 @@
   .btn-backup:active { opacity: 0.8; }
   .btn-export { background: var(--primary); color: white; }
   .btn-import { background: var(--primary-light); color: var(--primary); }
+  .btn-danger { background: #FDECEA; color: #E53935; }
   .backup-info {
     font-size: 12px; color: var(--text-sub); text-align: center;
     margin-top: 10px; line-height: 1.5;
   }
+  /* Add modal tabs */
+  .add-tabs {
+    display: flex; gap: 6px; margin-bottom: 20px;
+    background: var(--bg); border-radius: 12px; padding: 4px;
+  }
+  .add-tab {
+    flex: 1; padding: 8px; border: none; border-radius: 9px;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    background: transparent; color: var(--text-sub);
+  }
+  .add-tab.active { background: var(--card); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
   /* FAB */
   .fab {
     position: fixed;
@@ -614,29 +617,38 @@
   </button>
 </div>
 
-<!-- 新增習慣 Modal -->
+<!-- 新增 Modal -->
 <div class="modal-overlay" id="add-habit-modal">
   <div class="modal">
-    <div class="modal-title">新增習慣</div>
-    <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%; margin-bottom:12px;">
-    <select class="chain-select" id="new-habit-chain">
-      <option value="">獨立習慣（不加入鏈條）</option>
-      <option value="__new__">＋ 建立新鏈條</option>
-    </select>
-    <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20"
-      style="display:none; margin-top:10px; width:100%;">
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
-      <button class="btn-confirm" onclick="addHabit()">新增</button>
+    <!-- Tab switcher -->
+    <div class="add-tabs">
+      <button class="add-tab active" id="tab-habit" onclick="switchAddTab('habit')">新增習慣</button>
+      <button class="add-tab" id="tab-chain" onclick="switchAddTab('chain')">新增鏈條</button>
+    </div>
+    <!-- 新增習慣 -->
+    <div id="add-panel-habit">
+      <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%;">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
+        <button class="btn-confirm" onclick="addHabit()">新增</button>
+      </div>
+    </div>
+    <!-- 新增鏈條 -->
+    <div id="add-panel-chain" style="display:none;">
+      <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20" style="width:100%;">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
+        <button class="btn-confirm" onclick="addChain()">新增</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ===== BACKUP PAGE ===== -->
+<!-- ===== SETTINGS PAGE ===== -->
 <div class="page" id="page-backup">
   <div class="header">
-    <h1>備份</h1>
-    <p>匯出或匯入你的習慣資料</p>
+    <h1>設定</h1>
+    <p>備份與資料管理</p>
   </div>
   <div class="scroll-area">
     <div class="backup-section">
@@ -670,6 +682,32 @@
         <div class="backup-info">匯入後會自動重新整理頁面</div>
       </div>
 
+      <div class="backup-card">
+        <div class="backup-card-title">🗑️ 刪除所有紀錄</div>
+        <div class="backup-card-desc">清除所有習慣的打卡紀錄，但保留習慣名稱與設定。此操作無法復原。</div>
+        <button class="btn-backup btn-danger" onclick="openDeleteRecordsModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+          刪除所有打卡紀錄
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 刪除所有紀錄確認 Modal -->
+<div class="modal-overlay" id="delete-records-modal">
+  <div class="modal">
+    <div class="modal-title">確認刪除所有紀錄？</div>
+    <p style="font-size:14px; color:var(--text-sub); line-height:1.7; margin-bottom:4px;">
+      這將清除 <strong style="color:var(--text)">所有習慣</strong> 的打卡紀錄。<br>習慣名稱會保留，但所有歷史資料將永久消失，<strong style="color:#E53935;">無法復原。</strong>
+    </p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('delete-records-modal')">取消</button>
+      <button class="btn-confirm" style="background:#E53935;" onclick="deleteAllRecords()">確認刪除</button>
     </div>
   </div>
 </div>
@@ -708,7 +746,7 @@
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
     </div>
-    <span>備份</span>
+    <span>設定</span>
   </button>
 </nav>
 
@@ -727,16 +765,6 @@
   </div>
 </div>
 
-<!-- Chain Assign Modal -->
-<div class="modal-overlay" id="chain-modal">
-  <div class="modal">
-    <div class="modal-title">設定歸屬鏈條</div>
-    <div id="chain-options"></div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('chain-modal')">取消</button>
-    </div>
-  </div>
-</div>
 
 <!-- Delete Confirm Modal -->
 <div class="modal-overlay" id="delete-modal">
@@ -1238,7 +1266,6 @@ function renderManage() {
   }
 
   initDragDrop();
-  rebuildChainSelect();
 }
 
 function makeManageItem(h) {
@@ -1256,11 +1283,9 @@ function makeManageItem(h) {
     </div>
     <div class="manage-item-body">
       <div class="manage-item-top">
-        <div class="manage-item-name">${h.name}</div>
+        <div class="manage-item-name tappable-name" onclick="openRename('${h.id}')">${h.name}</div>
         <div class="manage-btns">
-          <button class="btn-sm btn-chain" onclick="openChainAssign('${h.id}')">⛓</button>
-          <button class="btn-sm btn-rename" onclick="openRename('${h.id}')">改名</button>
-          <button class="btn-sm btn-history" onclick="toggleHistory('hist-${h.id}')">歷史</button>
+          <button class="btn-sm btn-history" onclick="toggleHistory('hist-${h.id}')">查看</button>
           <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
         </div>
       </div>
@@ -1401,61 +1426,21 @@ function onDragEnd(e) {
   setTimeout(() => renderManage(), 100);
 }
 
-// ===== CHAIN ASSIGN MODAL =====
-let assigningHabitId = null;
-function openChainAssign(id) {
-  assigningHabitId = id;
-  const h = data.habits.find(x => x.id === id);
-  const opts = document.getElementById('chain-options');
-  opts.innerHTML = '';
 
-  // Standalone option
-  const standalone = document.createElement('div');
-  standalone.className = 'chain-option' + (!h.chain ? ' selected' : '');
-  standalone.textContent = '📌 獨立習慣（不屬於任何鏈條）';
-  standalone.onclick = () => assignChain(null);
-  opts.appendChild(standalone);
 
-  data.chains.forEach(c => {
-    const opt = document.createElement('div');
-    opt.className = 'chain-option' + (h.chain === c.id ? ' selected' : '');
-    opt.textContent = `🔗 ${c.name}`;
-    opt.onclick = () => assignChain(c.id);
-    opts.appendChild(opt);
-  });
-
-  openModal('chain-modal');
-}
-
-function assignChain(chainId) {
-  const h = data.habits.find(x => x.id === assigningHabitId);
-  if (h) h.chain = chainId;
-  saveData(data);
-  closeModal('chain-modal');
-  renderManage();
-}
-
-function rebuildChainSelect() {
-  const chainSel = document.getElementById('new-habit-chain');
-  chainSel.innerHTML = '<option value="">獨立習慣（不加入鏈條）</option>';
-  data.chains.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.id; opt.textContent = `加入「${c.name}」`;
-    chainSel.appendChild(opt);
-  });
-  const newOpt = document.createElement('option');
-  newOpt.value = '__new__'; newOpt.textContent = '＋ 建立新鏈條';
-  chainSel.appendChild(newOpt);
-
-  chainSel.onchange = () => {
-    document.getElementById('new-chain-name').style.display =
-      chainSel.value === '__new__' ? 'block' : 'none';
-  };
+function switchAddTab(tab) {
+  document.getElementById('tab-habit').classList.toggle('active', tab === 'habit');
+  document.getElementById('tab-chain').classList.toggle('active', tab === 'chain');
+  document.getElementById('add-panel-habit').style.display = tab === 'habit' ? 'block' : 'none';
+  document.getElementById('add-panel-chain').style.display = tab === 'chain' ? 'block' : 'none';
+  const focusId = tab === 'habit' ? 'new-habit-name' : 'new-chain-name';
+  setTimeout(() => document.getElementById(focusId).focus(), 50);
 }
 
 function openAddModal() {
-  rebuildChainSelect();
   document.getElementById('new-habit-name').value = '';
+  document.getElementById('new-chain-name').value = '';
+  switchAddTab('habit');
   document.getElementById('add-habit-modal').classList.add('open');
   setTimeout(() => document.getElementById('new-habit-name').focus(), 300);
 }
@@ -1465,29 +1450,22 @@ function addHabit() {
   const nameEl = document.getElementById('new-habit-name');
   const name = nameEl.value.trim();
   if (!name) { nameEl.focus(); return; }
-
-  const chainSel = document.getElementById('new-habit-chain');
-  let chainId = chainSel.value;
-
-  if (chainId === '__new__') {
-    const newChainName = document.getElementById('new-chain-name').value.trim();
-    if (!newChainName) { document.getElementById('new-chain-name').focus(); return; }
-    chainId = 'chain_' + Date.now();
-    data.chains.push({ id: chainId, name: newChainName });
-    document.getElementById('new-chain-name').value = '';
-    document.getElementById('new-chain-name').style.display = 'none';
-  }
-
   const id = 'h_' + Date.now();
-  data.habits.push({
-    id, name,
-    chain: chainId || null,
-    nameHistory: [{ name, changedAt: today() }],
-    records: {}
-  });
+  data.habits.push({ id, name, chain: null, nameHistory: [{ name, changedAt: today() }], records: {} });
   saveData(data);
   nameEl.value = '';
-  chainSel.value = '';
+  closeModal('add-habit-modal');
+  renderManage();
+}
+
+// Add chain
+function addChain() {
+  const nameEl = document.getElementById('new-chain-name');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+  data.chains.push({ id: 'chain_' + Date.now(), name });
+  saveData(data);
+  nameEl.value = '';
   closeModal('add-habit-modal');
   renderManage();
 }
@@ -1536,6 +1514,17 @@ function renderBackupInfo() {
   const totalRecords = data.habits.reduce((sum, h) => sum + Object.keys(h.records).length, 0);
   document.getElementById('export-info').textContent =
     `目前有 ${data.habits.length} 個習慣、${totalRecords} 筆打卡紀錄`;
+}
+
+function openDeleteRecordsModal() {
+  openModal('delete-records-modal');
+}
+
+function deleteAllRecords() {
+  data.habits.forEach(h => h.records = {});
+  saveData(data);
+  closeModal('delete-records-modal');
+  showToast('✅ 所有打卡紀錄已清除');
 }
 
 function exportBackup() {
