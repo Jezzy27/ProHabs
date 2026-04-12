@@ -89,18 +89,6 @@
   }
 
   /* ===== TODAY PAGE ===== */
-  .today-stats {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    padding: 0 16px; margin-bottom: 12px;
-  }
-  .stat-card {
-    background: var(--primary-light); border-radius: var(--radius-card);
-    padding: 18px 20px;
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .stat-num { font-size: 34px; font-weight: 700; color: var(--primary); line-height: 1; }
-  .stat-label { font-size: 12px; color: var(--primary); opacity: 0.65; margin-top: 2px; font-weight: 500; }
-
   .progress-bar-wrap { margin: 0 16px 12px; }
   .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; font-weight: 500; }
   .progress-bar { height: 7px; background: #C8F0D8; border-radius: 99px; overflow: hidden; }
@@ -116,7 +104,7 @@
   .chain-line { flex: 1; height: 1px; background: #C8F0D8; }
 
   .habit-card {
-    background: var(--card); border-radius: 16px;
+    background: var(--hc-bg, var(--card)); border-radius: 16px;
     box-shadow: var(--shadow); padding: 16px 18px;
     display: flex; align-items: center; gap: 14px;
     margin-bottom: 8px; cursor: pointer;
@@ -125,21 +113,66 @@
     user-select: none;
   }
   .habit-card:active { transform: scale(0.985); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-  .habit-card.done { background: var(--primary-light); }
+  .habit-card.done { background: var(--hc-done, var(--primary-light)); }
   .habit-card.done .habit-name { text-decoration: line-through; color: var(--text-sub); }
 
   .check-circle {
     width: 26px; height: 26px; border-radius: 50%;
-    border: 2px solid #A0DDB8; flex-shrink: 0;
+    border: 2px solid var(--hc-border, #A0DDB8); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     background: transparent;
   }
   .habit-card.done .check-circle {
-    background: var(--primary); border-color: var(--primary);
+    background: var(--hc-accent, var(--primary));
+    border-color: var(--hc-accent, var(--primary));
   }
   .check-circle svg { opacity: 0; transform: scale(0); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
   .habit-card.done .check-circle svg { opacity: 1; transform: scale(1); }
+
+  /* Habit settings modal */
+  .settings-label {
+    font-size: 11px; font-weight: 700; color: var(--text-sub);
+    letter-spacing: 0.6px; text-transform: uppercase;
+    margin: 18px 0 8px;
+  }
+  .color-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .color-swatch {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-swatch.selected { border-color: var(--text); transform: scale(1.2); }
+  .day-presets { display: flex; gap: 6px; }
+  .day-preset-btn {
+    flex: 1; padding: 9px 4px; border-radius: 10px; border: none;
+    background: var(--bg); color: var(--text-sub);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .day-preset-btn.active { background: var(--primary-light); color: var(--primary); }
+  .day-custom-row { display: flex; gap: 5px; margin-top: 8px; }
+  .day-toggle {
+    flex: 1; padding: 8px 2px; border-radius: 9px; border: none;
+    background: var(--bg); color: var(--text-sub);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .day-toggle.on { background: var(--primary-light); color: var(--primary); }
+  .settings-date-input {
+    width: 100%; padding: 12px 14px; border-radius: var(--radius-btn);
+    border: 2px solid transparent; background: var(--bg);
+    font-family: inherit; font-size: 15px; color: var(--text);
+    outline: none; transition: border-color 0.2s;
+  }
+  .settings-date-input:focus { border-color: var(--primary); }
+  .pause-row { display: flex; align-items: center; }
+  .pause-toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .pause-toggle-wrap input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; }
+  .pause-toggle-label { font-size: 15px; font-weight: 500; color: var(--text); }
+  .habit-color-dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    margin-right: 7px; flex-shrink: 0; vertical-align: middle; margin-bottom: 1px;
+  }
 
   .habit-name { font-size: 15px; font-weight: 500; flex: 1; line-height: 1.3; }
 
@@ -311,7 +344,7 @@
 
   .manage-item {
     background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 16px 16px 16px 4px;
+    box-shadow: var(--shadow); padding: 16px 4px 16px 16px;
     margin-bottom: 10px;
     display: flex; align-items: flex-start; gap: 0;
     transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
@@ -345,17 +378,12 @@
     padding: 5px 10px; border-radius: 8px; border: none; font-family: inherit;
     font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
   }
-  .btn-history { background: #E0EDDB; color: var(--text-sub); }
   .btn-delete { background: #FDECEA; color: #E53935; }
 
-  .history-panel {
-    margin-top: 12px; border-top: 1px solid #C8DCBF; padding-top: 12px;
-    display: none;
-  }
-  .history-panel.open { display: block; }
-  .history-item { display: flex; gap: 12px; padding: 6px 0; font-size: 13px; }
+  .history-item { display: flex; gap: 12px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #EEF5EB; }
+  .history-item:last-child { border-bottom: none; }
   .history-date { color: var(--text-sub); white-space: nowrap; }
-  .history-name { font-weight: 500; }
+  .history-name { font-weight: 500; flex: 1; }
   .history-current { color: var(--primary); font-size: 11px; }
 
   /* Ghost element while dragging */
@@ -490,6 +518,57 @@
   }
   .fab:active { transform: scale(0.92); box-shadow: 0 3px 10px rgba(46,173,92,0.3); }
 
+  /* 兩分鐘計時器 */
+  .timer-overlay {
+    position: fixed; inset: 0;
+    background: #163D24;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .timer-overlay.open { opacity: 1; pointer-events: all; }
+  .timer-content {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 20px; padding: 40px 24px; width: 100%; max-width: 360px;
+  }
+  .timer-subtitle { font-size: 13px; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  .timer-habit-name { font-size: 22px; font-weight: 700; color: white; text-align: center; line-height: 1.3; }
+  .timer-ring-wrap { position: relative; width: 220px; height: 220px; }
+  .timer-ring { width: 220px; height: 220px; transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 10; }
+  .timer-ring-progress {
+    fill: none; stroke: #2EAD5C; stroke-width: 10; stroke-linecap: round;
+    stroke-dasharray: 628.3; stroke-dashoffset: 628.3;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .timer-display {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 56px; font-weight: 700; color: white;
+    font-variant-numeric: tabular-nums; letter-spacing: -2px;
+  }
+  .timer-hint { font-size: 14px; color: rgba(255,255,255,0.4); text-align: center; }
+  .timer-btns { display: flex; gap: 12px; width: 100%; margin-top: 8px; }
+  .timer-btn-cancel {
+    flex: 1; padding: 16px; border-radius: 16px; border: none;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55);
+    font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .timer-btn-main {
+    flex: 2; padding: 16px; border-radius: 16px; border: none;
+    background: #2EAD5C; color: white;
+    font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .timer-btn-main:active { opacity: 0.85; }
+  .habit-timer-btn {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: transparent; color: var(--hc-border, #A0DDB8);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: background 0.15s;
+    padding: 0;
+  }
+  .habit-timer-btn:active { background: var(--hc-done, var(--primary-light)); }
+
   .backup-toast {
     position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%);
     background: #2C1A0E; color: white; padding: 12px 22px; border-radius: 99px;
@@ -515,17 +594,7 @@
     </div>
   </div>
   <div class="scroll-area">
-    <div class="today-stats">
-      <div class="stat-card">
-        <div class="stat-num" id="stat-done">0</div>
-        <div class="stat-label">已完成</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="stat-total">0</div>
-        <div class="stat-label">今日習慣</div>
-      </div>
-    </div>
-    <div class="progress-bar-wrap card" style="margin: 0 16px 16px;">
+    <div class="progress-bar-wrap card" style="margin: 0 16px 12px;">
       <div class="progress-label">
         <span>今日進度</span>
         <span id="progress-pct">0%</span>
@@ -750,17 +819,72 @@
   </button>
 </nav>
 
+<!-- 兩分鐘計時器 -->
+<div class="timer-overlay" id="timer-overlay">
+  <div class="timer-content">
+    <div class="timer-subtitle">兩分鐘法則</div>
+    <div class="timer-habit-name" id="timer-habit-name"></div>
+    <div class="timer-ring-wrap">
+      <svg class="timer-ring" viewBox="0 0 240 240">
+        <circle class="timer-ring-bg" cx="120" cy="120" r="100"/>
+        <circle class="timer-ring-progress" id="timer-ring-progress" cx="120" cy="120" r="100"/>
+      </svg>
+      <div class="timer-display" id="timer-display">2:00</div>
+    </div>
+    <p class="timer-hint">先做兩分鐘，開始就是成功</p>
+    <div class="timer-btns">
+      <button class="timer-btn-cancel" onclick="cancelTimer()">取消</button>
+      <button class="timer-btn-main" id="timer-main-btn" onclick="toggleTimer()">開始</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="backup-toast" id="backup-toast"></div>
 
-<!-- Rename Modal -->
-<div class="modal-overlay" id="rename-modal">
+<!-- Habit Settings Modal -->
+<div class="modal-overlay" id="habit-settings-modal">
   <div class="modal">
-    <div class="modal-title">改名習慣</div>
-    <input class="text-input" id="rename-input" placeholder="新名稱..." maxlength="30" style="width:100%">
+    <div class="modal-title">習慣設定</div>
+
+    <div class="settings-label" style="margin-top:0">名稱</div>
+    <input class="text-input" id="settings-name" placeholder="習慣名稱..." maxlength="30" style="width:100%;">
+
+    <div class="settings-label">顏色</div>
+    <div class="color-swatches" id="color-swatches"></div>
+
+    <div class="settings-label">顯示天數</div>
+    <div class="day-custom-row">
+      <button class="day-toggle" data-d="1" onclick="toggleDay(1)">一</button>
+      <button class="day-toggle" data-d="2" onclick="toggleDay(2)">二</button>
+      <button class="day-toggle" data-d="3" onclick="toggleDay(3)">三</button>
+      <button class="day-toggle" data-d="4" onclick="toggleDay(4)">四</button>
+      <button class="day-toggle" data-d="5" onclick="toggleDay(5)">五</button>
+      <button class="day-toggle" data-d="6" onclick="toggleDay(6)">六</button>
+      <button class="day-toggle" data-d="0" onclick="toggleDay(0)">日</button>
+    </div>
+
+    <div class="settings-label">截止日期 <span style="font-weight:400;text-transform:none;letter-spacing:0;">（選填，過了自動隱藏）</span></div>
+    <input type="date" class="settings-date-input" id="settings-enddate">
+
+    <div class="settings-label">暫時休息</div>
+    <div class="pause-row">
+      <label class="pause-toggle-wrap">
+        <input type="checkbox" id="settings-paused" onchange="togglePauseSection()">
+        <span class="pause-toggle-label">開啟休息模式</span>
+      </label>
+    </div>
+    <div id="pause-resume-wrap" style="display:none; margin-top:8px;">
+      <div style="font-size:13px; color:var(--text-sub); margin-bottom:6px;">恢復日期（到了自動回來）</div>
+      <input type="date" class="settings-date-input" id="settings-resumedate">
+    </div>
+
+    <div class="settings-label">名稱更改紀錄</div>
+    <div id="settings-name-history"></div>
+
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('rename-modal')">取消</button>
-      <button class="btn-confirm" onclick="confirmRename()">確認</button>
+      <button class="btn-cancel" onclick="closeModal('habit-settings-modal')">取消</button>
+      <button class="btn-confirm" onclick="saveHabitSettings()">儲存</button>
     </div>
   </div>
 </div>
@@ -779,6 +903,18 @@
 </div>
 
 <script>
+// ===== COLOR PALETTE =====
+const HABIT_COLORS = {
+  green:  { bg: '#E8F8EE', done: '#C8F0D8', border: '#8ED4AA', accent: '#2EAD5C' },
+  teal:   { bg: '#E6F8F6', done: '#C0EDE9', border: '#80CCCA', accent: '#0D9488' },
+  blue:   { bg: '#E8F2FF', done: '#C8DFFF', border: '#88B8F0', accent: '#3B82F6' },
+  purple: { bg: '#F2E8FF', done: '#E2C8FF', border: '#B888F0', accent: '#8B5CF6' },
+  pink:   { bg: '#FFE8F4', done: '#FFC8E4', border: '#F088B4', accent: '#EC4899' },
+  red:    { bg: '#FFE8E8', done: '#FFC8C8', border: '#F08888', accent: '#EF4444' },
+  orange: { bg: '#FFF4E8', done: '#FFE8C4', border: '#F0B870', accent: '#F59E0B' },
+  yellow: { bg: '#FFFBE8', done: '#FFF3C4', border: '#F0D870', accent: '#CA8A04' },
+};
+
 // ===== DATA LAYER =====
 const STORAGE_KEY = 'habitData_v2';
 
@@ -836,11 +972,17 @@ function renderToday() {
   document.getElementById('today-date-display').textContent =
     `${d.getMonth()+1}月${d.getDate()}日 週${days[d.getDay()]}`;
 
-  const habits = data.habits;
+  const dow = new Date().getDay();
+  const habits = data.habits.filter(h => {
+    const days = h.days || [0,1,2,3,4,5,6];
+    if (!days.includes(dow)) return false;
+    if (h.endDate && h.endDate < todayStr) return false;
+    if (h.paused && (!h.resumeDate || h.resumeDate > todayStr)) return false;
+    return true;
+  });
+
   const done = habits.filter(h => h.records[todayStr]).length;
   const total = habits.length;
-  document.getElementById('stat-done').textContent = done;
-  document.getElementById('stat-total').textContent = total;
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById('progress-pct').textContent = pct + '%';
   document.getElementById('progress-fill').style.width = pct + '%';
@@ -914,14 +1056,25 @@ function makeHabitCard(h, todayStr, chainId) {
   const isDone = !!h.records[todayStr];
   const card = document.createElement('div');
   card.className = 'habit-card' + (isDone ? ' done' : '');
+  const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
+  card.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
   card.innerHTML = `
     <div class="habit-name">${h.name}</div>
+    <button class="habit-timer-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    </button>
     <div class="check-circle">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
   `;
+  card.querySelector('.habit-timer-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    openTimer(h.id, h.name);
+  });
   card.addEventListener('click', (e) => {
     addRipple(card, e);
     toggleHabit(h.id, todayStr, chainId);
@@ -1270,10 +1423,22 @@ function renderManage() {
 
 function makeManageItem(h) {
   const item = document.createElement('div');
+  const isPaused = h.paused && (!h.resumeDate || h.resumeDate > today());
   item.className = 'manage-item';
   item.dataset.habitId = h.id;
+  if (isPaused) item.style.opacity = '0.5';
 
   item.innerHTML = `
+    <div class="manage-item-body">
+      <div class="manage-item-top">
+        <div class="manage-item-name tappable-name" onclick="openHabitSettings('${h.id}')">
+          <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>${h.name}${isPaused ? ' <span style="font-size:11px;color:#F59E0B;font-weight:700;">休息中</span>' : ''}
+        </div>
+        <div class="manage-btns">
+          <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
+        </div>
+      </div>
+    </div>
     <div class="drag-handle">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
@@ -1281,32 +1446,10 @@ function makeManageItem(h) {
         <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
       </svg>
     </div>
-    <div class="manage-item-body">
-      <div class="manage-item-top">
-        <div class="manage-item-name tappable-name" onclick="openRename('${h.id}')">${h.name}</div>
-        <div class="manage-btns">
-          <button class="btn-sm btn-history" onclick="toggleHistory('hist-${h.id}')">查看</button>
-          <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
-        </div>
-      </div>
-      <div class="history-panel" id="hist-${h.id}">
-        ${h.nameHistory.map((nh, i) => `
-          <div class="history-item">
-            <div class="history-date">${nh.changedAt}</div>
-            <div class="history-name">${nh.name}</div>
-            ${i === h.nameHistory.length-1 ? '<div class="history-current">目前</div>' : ''}
-          </div>
-        `).join('')}
-      </div>
-    </div>
   `;
   return item;
 }
 
-function toggleHistory(id) {
-  const el = document.getElementById(id);
-  el.classList.toggle('open');
-}
 
 // ===== DRAG & DROP (Touch) =====
 let dragState = null;
@@ -1451,7 +1594,7 @@ function addHabit() {
   const name = nameEl.value.trim();
   if (!name) { nameEl.focus(); return; }
   const id = 'h_' + Date.now();
-  data.habits.push({ id, name, chain: null, nameHistory: [{ name, changedAt: today() }], records: {} });
+  data.habits.push({ id, name, chain: null, color: 'green', days: [0,1,2,3,4,5,6], endDate: null, nameHistory: [{ name, changedAt: today() }], records: {} });
   saveData(data);
   nameEl.value = '';
   closeModal('add-habit-modal');
@@ -1470,24 +1613,86 @@ function addChain() {
   renderManage();
 }
 
-// Rename
-let renamingId = null;
-function openRename(id) {
-  renamingId = id;
+// ===== HABIT SETTINGS =====
+let settingsHabitId = null;
+let settingsDays = [0,1,2,3,4,5,6];
+let settingsColor = 'green';
+
+function openHabitSettings(id) {
+  settingsHabitId = id;
   const h = data.habits.find(x => x.id === id);
-  document.getElementById('rename-input').value = h.name;
-  openModal('rename-modal');
-  setTimeout(() => document.getElementById('rename-input').focus(), 350);
+  document.getElementById('settings-name').value = h.name;
+  settingsColor = h.color || 'green';
+  settingsDays = h.days ? [...h.days] : [0,1,2,3,4,5,6];
+  document.getElementById('settings-enddate').value = h.endDate || '';
+  document.getElementById('settings-paused').checked = !!h.paused;
+  document.getElementById('settings-resumedate').value = h.resumeDate || '';
+  document.getElementById('pause-resume-wrap').style.display = h.paused ? 'block' : 'none';
+  renderColorSwatches();
+  renderDayToggles();
+
+  // Name history
+  const hist = document.getElementById('settings-name-history');
+  const records = [...(h.nameHistory || [])].reverse();
+  if (records.length <= 1) {
+    hist.innerHTML = `<div style="font-size:13px;color:var(--text-sub);padding:4px 0;">尚無更改紀錄</div>`;
+  } else {
+    hist.innerHTML = records.map((r, i) =>
+      `<div class="history-item">
+        <div class="history-date">${r.changedAt}</div>
+        <div class="history-name">${r.name}</div>
+        ${i === 0 ? '<div class="history-current">目前</div>' : ''}
+      </div>`
+    ).join('');
+  }
+
+  openModal('habit-settings-modal');
+  setTimeout(() => document.getElementById('settings-name').focus(), 350);
 }
-function confirmRename() {
-  const newName = document.getElementById('rename-input').value.trim();
-  if (!newName || !renamingId) return;
-  const h = data.habits.find(x => x.id === renamingId);
-  if (h.name === newName) { closeModal('rename-modal'); return; }
-  h.name = newName;
-  h.nameHistory.push({ name: newName, changedAt: today() });
+
+function togglePauseSection() {
+  const on = document.getElementById('settings-paused').checked;
+  document.getElementById('pause-resume-wrap').style.display = on ? 'block' : 'none';
+}
+
+function renderColorSwatches() {
+  const container = document.getElementById('color-swatches');
+  container.innerHTML = '';
+  Object.entries(HABIT_COLORS).forEach(([key, c]) => {
+    const s = document.createElement('div');
+    s.className = 'color-swatch' + (settingsColor === key ? ' selected' : '');
+    s.style.background = c.accent;
+    s.onclick = () => { settingsColor = key; renderColorSwatches(); };
+    container.appendChild(s);
+  });
+}
+
+function toggleDay(d) {
+  const idx = settingsDays.indexOf(d);
+  if (idx >= 0) settingsDays.splice(idx, 1); else settingsDays.push(d);
+  renderDayToggles();
+}
+
+function renderDayToggles() {
+  document.querySelectorAll('.day-toggle').forEach(btn =>
+    btn.classList.toggle('on', settingsDays.includes(Number(btn.dataset.d))));
+}
+
+function saveHabitSettings() {
+  const newName = document.getElementById('settings-name').value.trim();
+  if (!newName || !settingsHabitId) return;
+  const h = data.habits.find(x => x.id === settingsHabitId);
+  if (h.name !== newName) {
+    h.name = newName;
+    h.nameHistory.push({ name: newName, changedAt: today() });
+  }
+  h.color = settingsColor;
+  h.days = settingsDays.length ? settingsDays : [0,1,2,3,4,5,6];
+  h.endDate = document.getElementById('settings-enddate').value || null;
+  h.paused = document.getElementById('settings-paused').checked;
+  h.resumeDate = h.paused ? (document.getElementById('settings-resumedate').value || null) : null;
   saveData(data);
-  closeModal('rename-modal');
+  closeModal('habit-settings-modal');
   renderManage();
 }
 
@@ -1567,6 +1772,74 @@ function importBackup(input) {
   reader.readAsText(file);
 }
 
+// ===== 兩分鐘計時器 =====
+const TIMER_TOTAL = 120;
+const CIRCUMFERENCE = 628.3;
+let timerHabitId = null;
+let timerInterval = null;
+let timerRemaining = TIMER_TOTAL;
+let timerRunning = false;
+
+function openTimer(habitId, habitName) {
+  timerHabitId = habitId;
+  timerRemaining = TIMER_TOTAL;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('timer-habit-name').textContent = habitName;
+  document.getElementById('timer-display').textContent = '2:00';
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
+  const btn = document.getElementById('timer-main-btn');
+  btn.textContent = '開始';
+  btn.onclick = toggleTimer;
+  btn.style.background = '#2EAD5C';
+  document.getElementById('timer-overlay').classList.add('open');
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-main-btn').textContent = '繼續';
+  } else {
+    timerRunning = true;
+    document.getElementById('timer-main-btn').textContent = '暫停';
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      const progress = (TIMER_TOTAL - timerRemaining) / TIMER_TOTAL;
+      document.getElementById('timer-ring-progress').style.strokeDashoffset =
+        CIRCUMFERENCE * (1 - progress);
+      const m = Math.floor(timerRemaining / 60);
+      const s = timerRemaining % 60;
+      document.getElementById('timer-display').textContent =
+        `${m}:${String(s).padStart(2,'0')}`;
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerComplete();
+      }
+    }, 1000);
+  }
+}
+
+function timerComplete() {
+  document.getElementById('timer-display').textContent = '✓';
+  const btn = document.getElementById('timer-main-btn');
+  btn.textContent = '打卡完成！';
+  btn.style.background = '#0D9488';
+  btn.onclick = () => {
+    const ts = today();
+    const h = data.habits.find(x => x.id === timerHabitId);
+    if (h && !h.records[ts]) toggleHabit(timerHabitId, ts, h.chain);
+    cancelTimer();
+  };
+}
+
+function cancelTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  document.getElementById('timer-overlay').classList.remove('open');
+}
+
 function showToast(msg) {
   const t = document.getElementById('backup-toast');
   t.textContent = msg;
@@ -1583,7 +1856,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 
 // Enter key for inputs
 document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
-document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmRename(); });
+document.getElementById('settings-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHabitSettings(); });
 
 // Init
 renderToday();
