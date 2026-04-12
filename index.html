@@ -533,9 +533,10 @@
     background: #163D24;
     display: flex; align-items: center; justify-content: center;
     z-index: 500; opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, background 1.2s ease;
   }
   .timer-overlay.open { opacity: 1; pointer-events: all; }
+  .timer-overlay.milestone { background: #7A5C00; }
   .timer-content {
     display: flex; flex-direction: column; align-items: center;
     gap: 20px; padding: 40px 24px; width: 100%; max-width: 360px;
@@ -852,7 +853,7 @@
       <button class="timer-btn-main" id="timer-main-btn" onclick="toggleTimer()">開始</button>
     </div>
     <button class="timer-btn-early" id="timer-early-btn" onclick="checkInAndClose()" style="display:none;">
-      提前打卡完成
+      打卡完成
     </button>
   </div>
 </div>
@@ -1105,9 +1106,8 @@ function makeHabitCard(h, todayStr, chainId) {
   if (hasTimer) {
     card.querySelector('.habit-timer-btn').addEventListener('click', e => {
       e.stopPropagation();
-      const isSec = h.targetUnit === '秒';
-      const targetSecs = isSec ? h.targetNum : (h.targetNum || 0) * 60;
-      openTimer(h.id, h.name, targetSecs, `${h.targetNum} ${h.targetUnit}`, isSec);
+      const targetSecs = h.targetUnit === '秒' ? h.targetNum : (h.targetNum || 0) * 60;
+      openTimer(h.id, h.name, targetSecs, `${h.targetNum} ${h.targetUnit}`);
     });
   }
   card.addEventListener('click', (e) => {
@@ -1827,41 +1827,32 @@ const ENCOURAGEMENTS = [
 let timerHabitId = null;
 let timerTargetSecs = 0;
 let timerTargetLabel = '';
-let timerIsSec = false;  // true = 秒模式（數上去）, false = 分鐘模式（兩分鐘→倒數）
 let timerInterval = null;
-let timerElapsed = 0;    // phase1 計時 / sec模式總計時
-let timerRemaining = 0;  // phase2 剩餘秒數
-let timerPhase = 1;      // 1 or 2
+let timerElapsed = 0;
 let timerRunning = false;
-let timerGoalReached = false; // sec模式：是否已達標
+let timerGoalReached = false;
+let timer2minNotified = false;
 
-function openTimer(habitId, habitName, targetSecs, targetLabel, isSec) {
+function openTimer(habitId, habitName, targetSecs, targetLabel) {
   timerHabitId = habitId;
   timerTargetSecs = targetSecs || 0;
   timerTargetLabel = targetLabel || '';
-  timerIsSec = !!isSec;
   timerElapsed = 0;
-  timerPhase = 1;
   timerRunning = false;
   timerGoalReached = false;
+  timer2minNotified = false;
   clearInterval(timerInterval);
 
   document.getElementById('timer-habit-name').textContent = habitName;
+  document.getElementById('timer-subtitle').textContent = timerTargetLabel ? `目標 ${timerTargetLabel}` : '計時中';
+  document.getElementById('timer-hint').textContent = '開始就是成功，先做做看！';
+  document.getElementById('timer-display').textContent = '0:00';
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
   document.getElementById('timer-early-btn').style.display = 'none';
   const btn = document.getElementById('timer-main-btn');
   btn.textContent = '開始';
   btn.onclick = toggleTimer;
   btn.style.background = '#2EAD5C';
-
-  if (timerIsSec) {
-    document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetLabel}`;
-    document.getElementById('timer-hint').textContent = '開始就是成功，先做做看！';
-  } else {
-    document.getElementById('timer-subtitle').textContent = '兩分鐘法則';
-    document.getElementById('timer-hint').textContent = '先做兩分鐘，開始就是成功';
-  }
-  document.getElementById('timer-display').textContent = '0:00';
-  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
   document.getElementById('timer-overlay').classList.add('open');
 }
 
@@ -1879,66 +1870,31 @@ function toggleTimer() {
 }
 
 function timerTick() {
-  if (timerIsSec) {
-    // 秒模式：一路數上去，到達目標給鼓勵，繼續計時
-    timerElapsed++;
-    const progress = timerTargetSecs > 0
-      ? Math.min(timerElapsed / timerTargetSecs, 1) : 0;
-    document.getElementById('timer-ring-progress').style.strokeDashoffset =
-      CIRCUMFERENCE * (1 - progress);
-    const m = Math.floor(timerElapsed / 60);
-    const s = timerElapsed % 60;
-    document.getElementById('timer-display').textContent =
-      `${m}:${String(s).padStart(2,'0')}`;
-    if (!timerGoalReached && timerElapsed >= timerTargetSecs) {
-      timerGoalReached = true;
-      const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-      document.getElementById('timer-hint').textContent = enc;
-      document.getElementById('timer-subtitle').textContent = '達標！繼續加油 💪';
-    }
-  } else if (timerPhase === 1) {
-    timerElapsed++;
-    const progress = timerElapsed / PHASE1_TOTAL;
-    document.getElementById('timer-ring-progress').style.strokeDashoffset =
-      CIRCUMFERENCE * (1 - progress);
-    const m = Math.floor(timerElapsed / 60);
-    const s = timerElapsed % 60;
-    document.getElementById('timer-display').textContent =
-      `${m}:${String(s).padStart(2,'0')}`;
-    if (timerElapsed >= PHASE1_TOTAL) {
-      if (timerTargetSecs > 0) {
-        enterPhase2();
-      } else {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        timerComplete();
-      }
-    }
-  } else {
-    timerRemaining--;
-    const total = timerTargetSecs;
-    const progress = (total - timerRemaining) / total;
-    document.getElementById('timer-ring-progress').style.strokeDashoffset =
-      CIRCUMFERENCE * (1 - progress);
-    const m = Math.floor(timerRemaining / 60);
-    const s = timerRemaining % 60;
-    document.getElementById('timer-display').textContent =
-      `${m}:${String(s).padStart(2,'0')}`;
-    if (timerRemaining <= 0) {
-      clearInterval(timerInterval);
-      timerRunning = false;
-      timerComplete();
+  timerElapsed++;
+  const progress = timerTargetSecs > 0
+    ? Math.min(timerElapsed / timerTargetSecs, 1) : 0;
+  document.getElementById('timer-ring-progress').style.strokeDashoffset =
+    CIRCUMFERENCE * (1 - progress);
+  const m = Math.floor(timerElapsed / 60);
+  const s = timerElapsed % 60;
+  document.getElementById('timer-display').textContent =
+    `${m}:${String(s).padStart(2, '0')}`;
+  // 兩分鐘里程碑
+  if (!timer2minNotified && timerElapsed === 120) {
+    timer2minNotified = true;
+    document.getElementById('timer-overlay').classList.add('milestone');
+    if (timerTargetSecs > 120) {
+      document.getElementById('timer-hint').textContent = '已堅持兩分鐘，繼續往目標衝！';
     }
   }
-}
-
-function enterPhase2() {
-  timerPhase = 2;
-  timerRemaining = timerTargetSecs;
-  document.getElementById('timer-ring-progress').style.strokeDashoffset = 0;
-  document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetLabel}`;
-  const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-  document.getElementById('timer-hint').textContent = enc;
+  // 達標
+  if (!timerGoalReached && timerTargetSecs > 0 && timerElapsed >= timerTargetSecs) {
+    timerGoalReached = true;
+    document.getElementById('timer-overlay').classList.add('milestone');
+    const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+    document.getElementById('timer-hint').textContent = enc;
+    document.getElementById('timer-subtitle').textContent = '達標！繼續加油 💪';
+  }
 }
 
 function timerComplete() {
@@ -1960,7 +1916,9 @@ function checkInAndClose() {
 function cancelTimer() {
   clearInterval(timerInterval);
   timerRunning = false;
-  document.getElementById('timer-overlay').classList.remove('open');
+  const overlay = document.getElementById('timer-overlay');
+  overlay.classList.remove('open');
+  overlay.classList.remove('milestone');
   document.getElementById('timer-early-btn').style.display = 'none';
   document.getElementById('timer-main-btn').onclick = toggleTimer;
 }
