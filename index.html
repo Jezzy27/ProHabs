@@ -536,7 +536,9 @@
     transition: opacity 0.3s, background 1.2s ease;
   }
   .timer-overlay.open { opacity: 1; pointer-events: all; }
-  .timer-overlay.milestone { background: #7A5C00; }
+  .timer-overlay.milestone { background: #2D1C00; }
+  .timer-overlay.milestone .timer-ring-progress { stroke: #FACC15; }
+  .timer-overlay.milestone .timer-ring-bg { stroke: rgba(250,204,21,0.15); }
   .timer-content {
     display: flex; flex-direction: column; align-items: center;
     gap: 20px; padding: 40px 24px; width: 100%; max-width: 360px;
@@ -549,7 +551,7 @@
   .timer-ring-progress {
     fill: none; stroke: #2EAD5C; stroke-width: 10; stroke-linecap: round;
     stroke-dasharray: 628.3; stroke-dashoffset: 628.3;
-    transition: stroke-dashoffset 1s linear;
+    transition: stroke-dashoffset 1s linear, stroke 1.2s ease;
   }
   .timer-display {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
