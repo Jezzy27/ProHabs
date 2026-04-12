@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="習慣">
+<title>習慣追蹤</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2EDE8;
+    --card: #FFFFFF;
+    --primary: #D4512A;
+    --primary-light: #F5DDD5;
+    --text: #2C1A0E;
+    --text-sub: #9B8B7E;
+    --radius-card: 20px;
+    --radius-btn: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --nav-h: 80px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+  .page { display: none; flex-direction: column; min-height: 100vh; padding-bottom: var(--nav-h); }
+  .page.active { display: flex; }
+
+  /* Header */
+  .header {
+    padding: 56px 24px 16px;
+    background: var(--bg);
+  }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { color: var(--text-sub); font-size: 14px; margin-top: 4px; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--card);
+    display: flex;
+    height: var(--nav-h);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -1px 0 rgba(0,0,0,0.06);
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; border: none; background: none;
+    color: var(--text-sub); font-size: 11px; font-family: inherit;
+    transition: color 0.2s;
+  }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item.active { color: var(--primary); }
+  .nav-item.active .nav-icon-wrap {
+    background: var(--primary-light);
+    border-radius: 12px;
+    padding: 6px 16px;
+  }
+  .nav-icon-wrap { padding: 6px 16px; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin: 0 16px 12px;
+  }
+
+  /* ===== TODAY PAGE ===== */
+  .today-stats {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 0 16px; margin-bottom: 12px;
+  }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius-card);
+    box-shadow: var(--shadow); padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-num { font-size: 36px; font-weight: 700; color: var(--primary); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--text-sub); }
+
+  .progress-bar-wrap { margin: 0 16px 16px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+  .progress-bar { height: 8px; background: #EDE8E3; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
+
+  /* Chain group */
+  .chain-group { margin: 0 16px 12px; }
+  .chain-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 4px; margin-bottom: 10px;
+  }
+  .chain-label { font-size: 13px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; text-transform: uppercase; }
+  .chain-line { flex: 1; height: 1px; background: #E8E0D8; }
+
+  .habit-card {
+    background: var(--card); border-radius: var(--radius-card);
+    box-shadow: var(--shadow); padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative; overflow: hidden;
+    user-select: none;
+  }
+  .habit-card:active { transform: scale(0.98); }
+  .habit-card.done { background: var(--primary-light); }
+  .habit-card.done .habit-name { text-decoration: line-through; color: var(--text-sub); }
+
+  .check-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2.5px solid #D5C9C0; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: transparent;
+  }
+  .habit-card.done .check-circle {
+    background: var(--primary); border-color: var(--primary);
+  }
+  .check-circle svg { opacity: 0; transform: scale(0); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+  .habit-card.done .check-circle svg { opacity: 1; transform: scale(1); }
+
+  .habit-name { font-size: 16px; font-weight: 500; flex: 1; }
+
+  /* Arrow connector */
+  .chain-arrow {
+    display: flex; justify-content: center; align-items: center;
+    margin: -4px 0 4px 20px; color: var(--primary); opacity: 0.5;
+  }
+
+  /* Chain complete celebration */
+  .chain-complete-banner {
+    background: var(--primary); color: white;
+    border-radius: var(--radius-card); padding: 12px 18px;
+    text-align: center; font-weight: 700; font-size: 14px;
+    margin-bottom: 8px;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    display: none;
+  }
+  .chain-complete-banner.show { display: block; }
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(212,81,42,0.15);
+    transform: scale(0);
+    animation: rippleAnim 0.5s linear;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* ===== STATS PAGE ===== */
+  .stats-select-wrap { margin: 0 16px 12px; }
+  .habit-select {
+    width: 100%; padding: 14px 18px; border-radius: var(--radius-btn);
+    border: none; background: var(--card); box-shadow: var(--shadow);
+    font-family: inherit; font-size: 15px; color: var(--text);
+    appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239B8B7E' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+    cursor: pointer;
+  }
+
+  /* B: 柔性文案 */
+  .encourage-card {
+    margin: 0 16px 12px; background: var(--card);
+    border-radius: var(--radius-card); box-shadow: var(--shadow);
+    padding: 18px 20px; display: none;
+  }
+  .encourage-card.show { display: block; }
+  .encourage-text { font-size: 15px; line-height: 1.7; color: var(--text); }
+  .encourage-sub { font-size: 13px; color: var(--text-sub); margin-top: 6px; }
+
+  /* C: 週熱度圓點 */
+  .week-dots-card {
+    margin: 0 16px 12px; background: var(--card);
+    border-radius: var(--radius-card); box-shadow: var(--shadow);
+    padding: 18px 20px; display: none;
+  }
+  .week-dots-card.show { display: block; }
+  .week-dots-title { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 14px; letter-spacing: 0.4px; }
+  .week-dots-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .week-dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+  .week-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #EDE8E3; transition: background 0.3s;
+  }
+  .week-dot.w100 { background: var(--primary); }
+  .week-dot.w75  { background: #E07050; }
+  .week-dot.w50  { background: #EAA080; }
+  .week-dot.w25  { background: #F2C8B8; }
+  .week-dot.w0   { background: #EDE8E3; }
+  .week-dot-label { font-size: 11px; color: var(--text-sub); }
+  .week-dot-pct { font-size: 12px; font-weight: 700; color: var(--text); }
+
+  /* A: 完成率條 */
+  .rate-card {
+    margin: 0 16px 12px; background: var(--card);
+    border-radius: var(--radius-card); box-shadow: var(--shadow);
+    padding: 18px 20px; display: none;
+  }
+  .rate-card.show { display: block; }
+  .rate-row { display: flex; flex-direction: column; gap: 14px; }
+  .rate-item-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .rate-item-name { color: var(--text-sub); font-weight: 500; }
+  .rate-item-pct { color: var(--primary); font-weight: 700; }
+  .rate-bar { height: 10px; background: #EDE8E3; border-radius: 99px; overflow: hidden; }
+  .rate-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.5s ease; }
+
+  /* 分隔線 */
+  .stats-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 4px 16px 12px; 
+  }
+  .stats-divider-line { flex: 1; height: 1px; background: #E8E0D8; }
+  .stats-divider-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.4px; }
+
+  /* 每日總覽月曆 */
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .cal-title { font-size: 18px; font-weight: 700; }
+  .cal-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--text); font-size: 16px; transition: background 0.2s;
+  }
+  .cal-btn:active { background: #E8E0D8; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 12px; color: var(--text-sub); padding: 4px 0 8px; font-weight: 500; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 13px; font-weight: 500;
+    position: relative; cursor: pointer; transition: transform 0.15s;
+  }
+  .cal-day:active { transform: scale(0.9); }
+  /* 完成率顏色 */
+  .cal-day.rate-full  { background: var(--primary); color: white; font-weight: 700; }
+  .cal-day.rate-high  { background: #E07050; color: white; }
+  .cal-day.rate-mid   { background: #F2C8B8; color: var(--text); }
+  .cal-day.rate-low   { background: #FAE8E0; color: var(--text-sub); }
+  .cal-day.rate-none  { background: transparent; color: var(--text-sub); }
+  .cal-day.today-marker::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: var(--primary);
+  }
+  .cal-day.rate-full.today-marker::after,
+  .cal-day.rate-high.today-marker::after { background: white; }
+  .cal-day.empty { opacity: 0; pointer-events: none; }
+  .calendar-overview-card { margin: 0 16px 12px; }
+
+  /* ===== MANAGE PAGE ===== */
+  .manage-list { margin: 0 16px; }
+
+  /* Chain section header */
+  .chain-section { margin-bottom: 6px; }
+  .chain-section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px 10px 14px;
+    background: var(--primary); border-radius: 14px;
+    margin-bottom: 4px;
+  }
+  .chain-section-name { color: white; font-size: 14px; font-weight: 700; flex: 1; }
+  .chain-section-hint { color: rgba(255,255,255,0.7); font-size: 11px; }
+
+  /* Drop zone for chain */
+  .chain-drop-zone {
+    min-height: 8px; border-radius: 10px;
+    transition: all 0.2s;
+    margin: 2px 0;
+  }
+  .chain-drop-zone.drag-over {
+    min-height: 52px; background: var(--primary-light);
+    border: 2px dashed var(--primary);
+  }
+
+  /* Standalone section */
+  .standalone-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 4px; margin-bottom: 4px;
+  }
+  .standalone-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; }
+  .standalone-line { flex: 1; height: 1px; background: #E8E0D8; }
+
+  .manage-item {
+    background: var(--card); border-radius: var(--radius-card);
+    box-shadow: var(--shadow); padding: 14px 14px 14px 4px;
+    margin-bottom: 8px;
+    display: flex; align-items: flex-start; gap: 0;
+    transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
+    position: relative;
+    touch-action: none;
+  }
+  .manage-item.dragging {
+    opacity: 0.4; transform: scale(0.98);
+  }
+  .manage-item.drag-placeholder {
+    background: var(--primary-light); border: 2px dashed var(--primary);
+    box-shadow: none; opacity: 1;
+  }
+  .manage-item.drag-placeholder * { visibility: hidden; }
+
+  /* Drag handle */
+  .drag-handle {
+    width: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: #C4B8B0; padding: 4px 0; cursor: grab; touch-action: none;
+    align-self: stretch;
+  }
+  .drag-handle:active { cursor: grabbing; color: var(--primary); }
+
+  .manage-item-body { flex: 1; min-width: 0; }
+  .manage-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .manage-item-name { font-size: 15px; font-weight: 500; flex: 1; padding-top: 2px; }
+  .manage-item-chain { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 99px; margin-top: 6px; display: inline-block; }
+  .manage-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-sm {
+    padding: 5px 10px; border-radius: 8px; border: none; font-family: inherit;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-rename { background: var(--primary-light); color: var(--primary); }
+  .btn-history { background: #F0EBE5; color: var(--text-sub); }
+  .btn-delete { background: #FDECEA; color: #E53935; }
+  .btn-chain { background: #EEF0F5; color: #555; }
+
+  .history-panel {
+    margin-top: 12px; border-top: 1px solid #F0EAE3; padding-top: 12px;
+    display: none;
+  }
+  .history-panel.open { display: block; }
+  .history-item { display: flex; gap: 12px; padding: 6px 0; font-size: 13px; }
+  .history-date { color: var(--text-sub); white-space: nowrap; }
+  .history-name { font-weight: 500; }
+  .history-current { color: var(--primary); font-size: 11px; }
+
+  /* Ghost element while dragging */
+  .drag-ghost {
+    position: fixed; pointer-events: none; z-index: 999;
+    background: white; border-radius: var(--radius-card);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    opacity: 0.95; transform: rotate(1.5deg) scale(1.02);
+    transition: transform 0.1s;
+    padding: 14px 18px; font-size: 15px; font-weight: 500;
+    color: var(--text); max-width: 320px;
+  }
+
+  /* Chain assign modal options */
+  .chain-option {
+    padding: 14px 16px; border-radius: var(--radius-btn);
+    border: 2px solid #EDE8E3; margin-bottom: 8px;
+    cursor: pointer; font-size: 15px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .chain-option:active, .chain-option.selected {
+    border-color: var(--primary); background: var(--primary-light); color: var(--primary);
+  }
+
+  /* Add new habit */
+  .add-section { margin: 16px 16px 0; }
+  .add-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .text-input {
+    flex: 1; padding: 14px 16px; border-radius: var(--radius-btn);
+    border: 2px solid transparent; background: var(--card); box-shadow: var(--shadow);
+    font-family: inherit; font-size: 15px; color: var(--text);
+    transition: border-color 0.2s; outline: none;
+  }
+  .text-input:focus { border-color: var(--primary); }
+  .text-input::placeholder { color: #C4B8B0; }
+  .btn-primary {
+    padding: 14px 20px; border-radius: var(--radius-btn); border: none;
+    background: var(--primary); color: white; font-family: inherit;
+    font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+
+  .chain-select {
+    width: 100%; padding: 12px 16px; border-radius: var(--radius-btn);
+    border: 2px solid transparent; background: var(--card); box-shadow: var(--shadow);
+    font-family: inherit; font-size: 14px; color: var(--text);
+    appearance: none; cursor: pointer; outline: none;
+    transition: border-color 0.2s;
+  }
+  .chain-select:focus { border-color: var(--primary); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border-radius: 24px 24px 0 0;
+    padding: 24px 24px 40px; width: 100%; max-width: 430px;
+    transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-cancel {
+    flex: 1; padding: 14px; border-radius: var(--radius-btn); border: none;
+    background: var(--bg); color: var(--text-sub); font-family: inherit;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+  }
+  .btn-confirm {
+    flex: 1; padding: 14px; border-radius: var(--radius-btn); border: none;
+    background: var(--primary); color: white; font-family: inherit;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+
+  /* Section scroll */
+  .scroll-area { flex: 1; overflow-y: auto; padding-top: 4px; padding-bottom: 16px; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* Today date display */
+  .today-date { font-size: 14px; color: var(--text-sub); margin-top: 4px; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-sub); font-size: 15px; }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* ===== BACKUP PAGE ===== */
+  .backup-section { margin: 0 16px 16px; }
+  .backup-card {
+    background: var(--card); border-radius: var(--radius-card);
+    box-shadow: var(--shadow); padding: 24px 20px;
+    margin-bottom: 12px;
+  }
+  .backup-card-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 6px;
+  }
+  .backup-card-desc {
+    font-size: 13px; color: var(--text-sub); line-height: 1.6; margin-bottom: 18px;
+  }
+  .btn-backup {
+    width: 100%; padding: 15px; border-radius: var(--radius-btn); border: none;
+    font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-backup:active { opacity: 0.8; }
+  .btn-export { background: var(--primary); color: white; }
+  .btn-import { background: var(--primary-light); color: var(--primary); }
+  .backup-info {
+    font-size: 12px; color: var(--text-sub); text-align: center;
+    margin-top: 10px; line-height: 1.5;
+  }
+  .backup-toast {
+    position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%);
+    background: #2C1A0E; color: white; padding: 12px 22px; border-radius: 99px;
+    font-size: 14px; font-weight: 500; z-index: 300;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .backup-toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ===== TODAY PAGE ===== -->
+<div class="page active" id="page-today">
+  <div class="header">
+    <h1>今日習慣</h1>
+    <p class="today-date" id="today-date-display"></p>
+  </div>
+  <div class="scroll-area">
+    <div class="today-stats">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">已完成</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">今日習慣</div>
+      </div>
+    </div>
+    <div class="progress-bar-wrap card" style="margin: 0 16px 16px;">
+      <div class="progress-label">
+        <span>今日進度</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div id="today-list"></div>
+  </div>
+</div>
+
+<!-- ===== STATS PAGE ===== -->
+<div class="page" id="page-stats">
+  <div class="header">
+    <h1>統計</h1>
+    <p>幾乎每天有做，就是好習慣 🌱</p>
+  </div>
+  <div class="scroll-area">
+
+    <!-- 選習慣 -->
+    <div class="stats-select-wrap">
+      <select class="habit-select" id="stats-select" onchange="renderHabitStats()">
+        <option value="">選擇習慣，查看趨勢...</option>
+      </select>
+    </div>
+
+    <!-- B: 柔性文案 -->
+    <div class="encourage-card" id="encourage-card">
+      <div class="encourage-text" id="encourage-text"></div>
+      <div class="encourage-sub" id="encourage-sub"></div>
+    </div>
+
+    <!-- C: 週熱度圓點 -->
+    <div class="week-dots-card" id="week-dots-card">
+      <div class="week-dots-title">最近 8 週完成率</div>
+      <div class="week-dots-row" id="week-dots-row"></div>
+    </div>
+
+    <!-- A: 完成率 -->
+    <div class="rate-card" id="rate-card">
+      <div class="rate-row" id="rate-row"></div>
+    </div>
+
+    <!-- 分隔 -->
+    <div class="stats-divider">
+      <div class="stats-divider-line"></div>
+      <div class="stats-divider-label">每日總覽</div>
+      <div class="stats-divider-line"></div>
+    </div>
+
+    <!-- 每日總覽月曆 -->
+    <div class="calendar-overview-card card">
+      <div class="cal-nav">
+        <button class="cal-btn" onclick="changeCalMonth(-1)">‹</button>
+        <div class="cal-title" id="cal-title"></div>
+        <button class="cal-btn" onclick="changeCalMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 當日明細 Modal -->
+<div class="modal-overlay" id="day-modal">
+  <div class="modal">
+    <div class="modal-title" id="day-modal-title"></div>
+    <div id="day-modal-list"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('day-modal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MANAGE PAGE ===== -->
+<div class="page" id="page-manage">
+  <div class="header">
+    <h1>管理習慣</h1>
+    <p>新增、改名、設定堆疊鏈條</p>
+  </div>
+  <div class="scroll-area">
+    <div class="manage-list" id="manage-list"></div>
+
+    <div class="add-section card" style="margin: 16px;">
+      <div class="add-title">新增習慣</div>
+      <div class="input-row">
+        <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30">
+        <button class="btn-primary" onclick="addHabit()">新增</button>
+      </div>
+      <select class="chain-select" id="new-habit-chain">
+        <option value="">獨立習慣（不加入鏈條）</option>
+        <option value="__new__">＋ 建立新鏈條</option>
+      </select>
+      <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20"
+        style="display:none; margin-top:10px;">
+    </div>
+  </div>
+</div>
+
+<!-- ===== BACKUP PAGE ===== -->
+<div class="page" id="page-backup">
+  <div class="header">
+    <h1>備份</h1>
+    <p>匯出或匯入你的習慣資料</p>
+  </div>
+  <div class="scroll-area">
+    <div class="backup-section">
+
+      <div class="backup-card">
+        <div class="backup-card-title">📤 匯出備份</div>
+        <div class="backup-card-desc">將所有習慣與打卡紀錄下載為 JSON 檔案，可保存在相簿或雲端硬碟。</div>
+        <button class="btn-backup btn-export" onclick="exportBackup()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          下載備份檔案
+        </button>
+        <div class="backup-info" id="export-info"></div>
+      </div>
+
+      <div class="backup-card">
+        <div class="backup-card-title">📥 匯入備份</div>
+        <div class="backup-card-desc">從備份檔案還原資料。<strong style="color:var(--primary)">注意：這會覆蓋目前所有資料。</strong></div>
+        <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importBackup(this)">
+        <button class="btn-backup btn-import" onclick="document.getElementById('import-file-input').click()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          選擇備份檔案
+        </button>
+        <div class="backup-info">匯入後會自動重新整理頁面</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('today',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <span>今日</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('stats',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </div>
+    <span>統計</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('manage',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+      </svg>
+    </div>
+    <span>管理</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('backup',this)">
+    <div class="nav-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    </div>
+    <span>備份</span>
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="backup-toast" id="backup-toast"></div>
+
+<!-- Rename Modal -->
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal">
+    <div class="modal-title">改名習慣</div>
+    <input class="text-input" id="rename-input" placeholder="新名稱..." maxlength="30" style="width:100%">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('rename-modal')">取消</button>
+      <button class="btn-confirm" onclick="confirmRename()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chain Assign Modal -->
+<div class="modal-overlay" id="chain-modal">
+  <div class="modal">
+    <div class="modal-title">設定歸屬鏈條</div>
+    <div id="chain-options"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('chain-modal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title">刪除習慣</div>
+    <p style="color:var(--text-sub);font-size:15px;">確定要刪除「<span id="delete-name"></span>」嗎？<br>所有打卡紀錄也會一併刪除。</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('delete-modal')">取消</button>
+      <button class="btn-confirm" style="background:#E53935;" onclick="confirmDelete()">刪除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA LAYER =====
+const STORAGE_KEY = 'habitData_v2';
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultData();
+  } catch { return getDefaultData(); }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getDefaultData() {
+  return {
+    habits: [
+      { id: 'h1', name: '起床10分鐘不看手機', chain: 'morning', nameHistory: [{ name: '起床10分鐘不看手機', changedAt: today() }], records: {} },
+      { id: 'h2', name: '棒式30秒', chain: 'morning', nameHistory: [{ name: '棒式30秒', changedAt: today() }], records: {} },
+      { id: 'h3', name: '冥想2分鐘', chain: 'morning', nameHistory: [{ name: '冥想2分鐘', changedAt: today() }], records: {} },
+      { id: 'h4', name: '英聽1部影片', chain: 'evening', nameHistory: [{ name: '英聽1部影片', changedAt: today() }], records: {} },
+      { id: 'h5', name: '掃除道2分鐘', chain: 'evening', nameHistory: [{ name: '掃除道2分鐘', changedAt: today() }], records: {} },
+      { id: 'h6', name: '健身、1萬步、運動', chain: null, nameHistory: [{ name: '健身、1萬步、運動', changedAt: today() }], records: {} },
+    ],
+    chains: [
+      { id: 'morning', name: '早晨鏈' },
+      { id: 'evening', name: '晚間鏈' },
+    ]
+  };
+}
+
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+
+let data = loadData();
+
+// ===== NAVIGATION =====
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'today') renderToday();
+  if (name === 'stats') renderStatsPage();
+  if (name === 'manage') renderManage();
+  if (name === 'backup') renderBackupInfo();
+}
+
+// ===== TODAY PAGE =====
+function renderToday() {
+  const todayStr = today();
+  // date display
+  const d = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('today-date-display').textContent =
+    `${d.getMonth()+1}月${d.getDate()}日 週${days[d.getDay()]}`;
+
+  const habits = data.habits;
+  const done = habits.filter(h => h.records[todayStr]).length;
+  const total = habits.length;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-total').textContent = total;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const list = document.getElementById('today-list');
+  list.innerHTML = '';
+
+  // Group by chain
+  const chainMap = {};
+  const standalone = [];
+  habits.forEach(h => {
+    if (h.chain) {
+      if (!chainMap[h.chain]) chainMap[h.chain] = [];
+      chainMap[h.chain].push(h);
+    } else {
+      standalone.push(h);
+    }
+  });
+
+  // Render chains
+  data.chains.forEach(chain => {
+    const chainHabits = chainMap[chain.id];
+    if (!chainHabits || chainHabits.length === 0) return;
+
+    const group = document.createElement('div');
+    group.className = 'chain-group';
+
+    const header = document.createElement('div');
+    header.className = 'chain-header';
+    header.innerHTML = `<div class="chain-line"></div><div class="chain-label">🔗 ${chain.name}</div><div class="chain-line"></div>`;
+    group.appendChild(header);
+
+    const allDone = chainHabits.every(h => h.records[todayStr]);
+    const banner = document.createElement('div');
+    banner.className = 'chain-complete-banner' + (allDone ? ' show' : '');
+    banner.textContent = `🎉 ${chain.name} 完成！`;
+    banner.id = 'banner-' + chain.id;
+    group.appendChild(banner);
+
+    chainHabits.forEach((h, idx) => {
+      if (idx > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'chain-arrow';
+        arrow.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
+        group.appendChild(arrow);
+      }
+      group.appendChild(makeHabitCard(h, todayStr, chain.id));
+    });
+
+    list.appendChild(group);
+  });
+
+  // Render standalone
+  if (standalone.length > 0) {
+    const group = document.createElement('div');
+    group.className = 'chain-group';
+    const header = document.createElement('div');
+    header.className = 'chain-header';
+    header.innerHTML = `<div class="chain-line"></div><div class="chain-label">獨立習慣</div><div class="chain-line"></div>`;
+    group.appendChild(header);
+    standalone.forEach(h => group.appendChild(makeHabitCard(h, todayStr, null)));
+    list.appendChild(group);
+  }
+
+  if (habits.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div>還沒有習慣<br>去管理頁面新增吧！</div>`;
+  }
+}
+
+function makeHabitCard(h, todayStr, chainId) {
+  const isDone = !!h.records[todayStr];
+  const card = document.createElement('div');
+  card.className = 'habit-card' + (isDone ? ' done' : '');
+  card.innerHTML = `
+    <div class="check-circle">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="habit-name">${h.name}</div>
+  `;
+  card.addEventListener('click', (e) => {
+    addRipple(card, e);
+    toggleHabit(h.id, todayStr, chainId);
+  });
+  return card;
+}
+
+function addRipple(card, e) {
+  const rect = card.getBoundingClientRect();
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+  card.appendChild(r);
+  setTimeout(() => r.remove(), 500);
+}
+
+function toggleHabit(id, dateStr, chainId) {
+  const h = data.habits.find(x => x.id === id);
+  if (!h) return;
+  if (h.records[dateStr]) {
+    delete h.records[dateStr];
+  } else {
+    h.records[dateStr] = true;
+  }
+  saveData(data);
+  renderToday();
+
+  // Check chain complete
+  if (chainId && h.records[dateStr]) {
+    const chainHabits = data.habits.filter(x => x.chain === chainId);
+    if (chainHabits.every(x => x.records[dateStr])) {
+      const banner = document.getElementById('banner-' + chainId);
+      if (banner) {
+        banner.classList.add('show');
+        banner.style.animation = 'none';
+        setTimeout(() => { banner.style.animation = ''; }, 10);
+      }
+    }
+  }
+}
+
+// ===== STATS PAGE =====
+let calYear, calMonth;
+
+function renderStatsPage() {
+  const select = document.getElementById('stats-select');
+  const current = select.value;
+  select.innerHTML = '<option value="">選擇習慣，查看趨勢...</option>';
+  data.habits.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h.id; opt.textContent = h.name;
+    if (h.id === current) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  const now = new Date();
+  if (!calYear) calYear = now.getFullYear();
+  if (!calMonth) calMonth = now.getMonth();
+
+  renderHabitStats();
+  renderOverviewCalendar();
+}
+
+// ── B + C + A ──
+function renderHabitStats() {
+  const hid = document.getElementById('stats-select').value;
+  const encourageCard = document.getElementById('encourage-card');
+  const weekCard = document.getElementById('week-dots-card');
+  const rateCard = document.getElementById('rate-card');
+
+  if (!hid) {
+    encourageCard.classList.remove('show');
+    weekCard.classList.remove('show');
+    rateCard.classList.remove('show');
+    return;
+  }
+
+  const h = data.habits.find(x => x.id === hid);
+  if (!h) return;
+  encourageCard.classList.add('show');
+  weekCard.classList.add('show');
+  rateCard.classList.add('show');
+
+  const todayStr = today();
+
+  // ── 計算各種數據 ──
+  // 過去30天完成率
+  let done30 = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    if (h.records[d.toISOString().slice(0,10)]) done30++;
+  }
+  const rate30 = Math.round(done30 / 30 * 100);
+
+  // 本週完成率（週一到今天）
+  const now = new Date();
+  const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0=週一
+  let doneThisWeek = 0;
+  const daysThisWeek = dayOfWeek + 1;
+  for (let i = 0; i <= dayOfWeek; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    if (h.records[d.toISOString().slice(0,10)]) doneThisWeek++;
+  }
+  const rateWeek = Math.round(doneThisWeek / daysThisWeek * 100);
+
+  // 最後幾天沒做
+  let missedDays = 0;
+  const checkD = new Date(todayStr);
+  while (true) {
+    const s = checkD.toISOString().slice(0,10);
+    if (!h.records[s]) { missedDays++; checkD.setDate(checkD.getDate()-1); }
+    else break;
+    if (missedDays > 60) break;
+  }
+
+  // ── B: 柔性文案 ──
+  let mainText = '', subText = '';
+  if (missedDays === 0) {
+    if (rate30 >= 85) {
+      mainText = `今天已經完成了，繼續保持 💪`;
+      subText = `過去30天完成率 ${rate30}%，幾乎每天都有做，這就是習慣的力量。`;
+    } else {
+      mainText = `今天完成了，做得好 🌱`;
+      subText = `過去30天完成率 ${rate30}%，有在進步。`;
+    }
+  } else if (missedDays === 1) {
+    mainText = `昨天沒做到，今天可以重新開始 😊`;
+    subText = rate30 >= 70
+      ? `過去30天完成率 ${rate30}%，偶爾休息一天沒關係。`
+      : `過去30天完成率 ${rate30}%，這週可以多試幾次。`;
+  } else if (missedDays <= 3) {
+    mainText = `這幾天比較忙嗎？隨時都能回來 🙌`;
+    subText = `過去30天完成率 ${rate30}%，你之前做得很不錯。`;
+  } else if (missedDays <= 7) {
+    mainText = `已經有 ${missedDays} 天沒做了，不過上個月的你做得很好 💛`;
+    subText = `過去30天完成率 ${rate30}%，重新開始比完美更重要。`;
+  } else {
+    mainText = `好一陣子沒做了，沒關係，今天就是重新開始的好時機 🌅`;
+    subText = `不用追回來，就從今天一步一步來。`;
+  }
+  document.getElementById('encourage-text').textContent = mainText;
+  document.getElementById('encourage-sub').textContent = subText;
+
+  // ── C: 週熱度圓點（最近8週）──
+  const dotsRow = document.getElementById('week-dots-row');
+  dotsRow.innerHTML = '';
+  for (let w = 7; w >= 0; w--) {
+    // 找該週的週一
+    const monday = new Date();
+    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1) - w * 7);
+    let weekDone = 0, weekTotal = 0;
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(monday);
+      day.setDate(monday.getDate() + d);
+      if (day > new Date()) continue; // 未來不算
+      weekTotal++;
+      if (h.records[day.toISOString().slice(0,10)]) weekDone++;
+    }
+    const pct = weekTotal > 0 ? Math.round(weekDone / weekTotal * 100) : 0;
+    const dotClass = pct >= 90 ? 'w100' : pct >= 70 ? 'w75' : pct >= 50 ? 'w50' : pct >= 20 ? 'w25' : 'w0';
+    const label = w === 0 ? '本週' : w === 1 ? '上週' : `${w}週前`;
+
+    const item = document.createElement('div');
+    item.className = 'week-dot-item';
+    item.innerHTML = `
+      <div class="week-dot-pct">${weekTotal > 0 ? pct + '%' : '-'}</div>
+      <div class="week-dot ${dotClass}"></div>
+      <div class="week-dot-label">${label}</div>
+    `;
+    dotsRow.appendChild(item);
+  }
+
+  // ── A: 完成率條 ──
+  const rateRow = document.getElementById('rate-row');
+  rateRow.innerHTML = `
+    <div>
+      <div class="rate-item-label">
+        <span class="rate-item-name">過去 30 天</span>
+        <span class="rate-item-pct">${rate30}%</span>
+      </div>
+      <div class="rate-bar"><div class="rate-fill" style="width:${rate30}%"></div></div>
+    </div>
+    <div>
+      <div class="rate-item-label">
+        <span class="rate-item-name">本週（${daysThisWeek}天中完成${doneThisWeek}天）</span>
+        <span class="rate-item-pct">${rateWeek}%</span>
+      </div>
+      <div class="rate-bar"><div class="rate-fill" style="width:${rateWeek}%"></div></div>
+    </div>
+  `;
+}
+
+// ── 每日總覽月曆 ──
+function renderOverviewCalendar() {
+  const now = new Date();
+  if (!calYear) calYear = now.getFullYear();
+  if (!calMonth) calMonth = now.getMonth();
+
+  document.getElementById('cal-title').textContent = `${calYear} 年 ${calMonth + 1} 月`;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  ['日','一','二','三','四','五','六'].forEach(d => {
+    const el = document.createElement('div'); el.className = 'cal-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayStr = today();
+  const total = data.habits.length;
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; el.textContent = '.';
+    grid.appendChild(el);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    el.textContent = d;
+
+    if (dateStr === todayStr) el.classList.add('today-marker');
+
+    if (total > 0) {
+      const done = data.habits.filter(h => h.records[dateStr]).length;
+      const pct = done / total;
+      if (pct === 1)        el.classList.add('rate-full');
+      else if (pct >= 0.7)  el.classList.add('rate-high');
+      else if (pct >= 0.4)  el.classList.add('rate-mid');
+      else if (pct > 0)     el.classList.add('rate-low');
+      else                  el.classList.add('rate-none');
+    }
+
+    el.addEventListener('click', () => openDayModal(dateStr, d));
+    grid.appendChild(el);
+  }
+}
+
+function changeCalMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderOverviewCalendar();
+}
+
+// ── 當日明細 Modal ──
+function openDayModal(dateStr, day) {
+  const days = ['日','一','二','三','四','五','六'];
+  const d = new Date(dateStr + 'T00:00:00');
+  document.getElementById('day-modal-title').textContent =
+    `${calYear}年${calMonth+1}月${day}日 週${days[d.getDay()]}`;
+
+  const doneHabits = data.habits.filter(h => h.records[dateStr]);
+  const missHabits = data.habits.filter(h => !h.records[dateStr]);
+  const total = data.habits.length;
+
+  let html = `<div style="color:var(--text-sub);font-size:13px;margin-bottom:14px;">完成 ${doneHabits.length} / ${total}</div>`;
+
+  doneHabits.forEach(h => {
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F0EB;">
+      <span style="color:var(--primary);font-size:18px;">✅</span>
+      <span style="font-size:15px;font-weight:500;">${h.name}</span>
+    </div>`;
+  });
+  missHabits.forEach(h => {
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F5F0EB;opacity:0.45;">
+      <span style="font-size:18px;">⬜</span>
+      <span style="font-size:15px;">${h.name}</span>
+    </div>`;
+  });
+
+  document.getElementById('day-modal-list').innerHTML = html;
+  openModal('day-modal');
+}
+
+// ===== MANAGE PAGE =====
+function renderManage() {
+  const list = document.getElementById('manage-list');
+  list.innerHTML = '';
+
+  if (data.habits.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div>還沒有任何習慣</div>`;
+  }
+
+  // Render chain sections
+  data.chains.forEach(chain => {
+    const chainHabits = data.habits.filter(h => h.chain === chain.id);
+    const section = document.createElement('div');
+    section.className = 'chain-section';
+    section.dataset.chainId = chain.id;
+
+    section.innerHTML = `
+      <div class="chain-section-header">
+        <span class="chain-section-name">🔗 ${chain.name}</span>
+        <span class="chain-section-hint">長按拖移排序</span>
+      </div>
+    `;
+
+    const innerList = document.createElement('div');
+    innerList.className = 'chain-inner-list';
+    innerList.dataset.chainId = chain.id;
+    innerList.style.cssText = 'padding-left:16px; min-height:8px;';
+
+    chainHabits.forEach(h => {
+      innerList.appendChild(makeManageItem(h));
+    });
+
+    // Drop zone hint
+    if (chainHabits.length === 0) {
+      const dz = document.createElement('div');
+      dz.className = 'chain-drop-zone';
+      dz.dataset.chainId = chain.id;
+      dz.style.cssText = 'min-height:44px;background:var(--primary-light);border:2px dashed var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--primary);margin-bottom:8px;';
+      dz.textContent = '拖移習慣到這裡';
+      innerList.appendChild(dz);
+    }
+
+    section.appendChild(innerList);
+    list.appendChild(section);
+  });
+
+  // Standalone section
+  const standalone = data.habits.filter(h => !h.chain);
+  if (standalone.length > 0 || data.chains.length > 0) {
+    const standaloneSection = document.createElement('div');
+    standaloneSection.innerHTML = `
+      <div class="standalone-header">
+        <div class="standalone-line"></div>
+        <div class="standalone-label">獨立習慣</div>
+        <div class="standalone-line"></div>
+      </div>
+    `;
+    const standaloneList = document.createElement('div');
+    standaloneList.className = 'chain-inner-list';
+    standaloneList.dataset.chainId = '';
+    standalone.forEach(h => standaloneList.appendChild(makeManageItem(h)));
+    standaloneSection.appendChild(standaloneList);
+    list.appendChild(standaloneSection);
+  }
+
+  initDragDrop();
+  rebuildChainSelect();
+}
+
+function makeManageItem(h) {
+  const item = document.createElement('div');
+  item.className = 'manage-item';
+  item.dataset.habitId = h.id;
+
+  item.innerHTML = `
+    <div class="drag-handle">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
+        <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+        <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
+      </svg>
+    </div>
+    <div class="manage-item-body">
+      <div class="manage-item-top">
+        <div class="manage-item-name">${h.name}</div>
+        <div class="manage-btns">
+          <button class="btn-sm btn-chain" onclick="openChainAssign('${h.id}')">⛓</button>
+          <button class="btn-sm btn-rename" onclick="openRename('${h.id}')">改名</button>
+          <button class="btn-sm btn-history" onclick="toggleHistory('hist-${h.id}')">歷史</button>
+          <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
+        </div>
+      </div>
+      <div class="history-panel" id="hist-${h.id}">
+        ${h.nameHistory.map((nh, i) => `
+          <div class="history-item">
+            <div class="history-date">${nh.changedAt}</div>
+            <div class="history-name">${nh.name}</div>
+            ${i === h.nameHistory.length-1 ? '<div class="history-current">目前</div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  return item;
+}
+
+function toggleHistory(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+// ===== DRAG & DROP (Touch) =====
+let dragState = null;
+
+function initDragDrop() {
+  const handles = document.querySelectorAll('.drag-handle');
+  handles.forEach(handle => {
+    handle.addEventListener('touchstart', onDragStart, { passive: false });
+  });
+}
+
+function onDragStart(e) {
+  e.preventDefault();
+  const item = e.currentTarget.closest('.manage-item');
+  if (!item) return;
+
+  const habitId = item.dataset.habitId;
+  const rect = item.getBoundingClientRect();
+  const touch = e.touches[0];
+
+  // Create ghost
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.textContent = data.habits.find(h => h.id === habitId)?.name || '';
+  ghost.style.width = rect.width + 'px';
+  ghost.style.top = (touch.clientY - 24) + 'px';
+  ghost.style.left = rect.left + 'px';
+  document.body.appendChild(ghost);
+
+  // Create placeholder
+  const placeholder = document.createElement('div');
+  placeholder.className = 'manage-item drag-placeholder';
+  placeholder.style.height = rect.height + 'px';
+  item.parentNode.insertBefore(placeholder, item);
+  item.classList.add('dragging');
+
+  dragState = { habitId, item, ghost, placeholder, startY: touch.clientY };
+
+  document.addEventListener('touchmove', onDragMove, { passive: false });
+  document.addEventListener('touchend', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!dragState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const { ghost, placeholder } = dragState;
+
+  // Move ghost
+  ghost.style.top = (touch.clientY - 24) + 'px';
+
+  // Find what element we're hovering over
+  ghost.style.display = 'none';
+  placeholder.style.display = 'none';
+  const elBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+  ghost.style.display = '';
+  placeholder.style.display = '';
+
+  if (!elBelow) return;
+
+  // Find nearest manage-item or chain-inner-list
+  const targetItem = elBelow.closest('.manage-item:not(.dragging):not(.drag-placeholder)');
+  const targetList = elBelow.closest('.chain-inner-list');
+
+  if (targetItem) {
+    const targetRect = targetItem.getBoundingClientRect();
+    const midpoint = targetRect.top + targetRect.height / 2;
+    if (touch.clientY < midpoint) {
+      targetItem.parentNode.insertBefore(placeholder, targetItem);
+    } else {
+      targetItem.parentNode.insertBefore(placeholder, targetItem.nextSibling);
+    }
+  } else if (targetList) {
+    targetList.appendChild(placeholder);
+  }
+}
+
+function onDragEnd(e) {
+  if (!dragState) return;
+  const { habitId, item, ghost, placeholder } = dragState;
+
+  // Insert item where placeholder is
+  placeholder.parentNode.insertBefore(item, placeholder);
+  placeholder.remove();
+  item.classList.remove('dragging');
+  ghost.remove();
+
+  // Determine new chain from parent list
+  const parentList = item.closest('.chain-inner-list');
+  const newChainId = parentList ? (parentList.dataset.chainId || null) : null;
+
+  // Determine new order within chain/standalone
+  const siblings = Array.from(parentList ? parentList.querySelectorAll('.manage-item') : []);
+  const newOrder = siblings.map(el => el.dataset.habitId);
+
+  // Update data
+  const habit = data.habits.find(h => h.id === habitId);
+  if (habit) habit.chain = newChainId || null;
+
+  // Reorder data.habits to match DOM order
+  const otherHabits = data.habits.filter(h => !newOrder.includes(h.id));
+  const reorderedGroup = newOrder.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
+
+  // Rebuild full order: keep chains grouping
+  const allIds = [];
+  document.querySelectorAll('.chain-inner-list').forEach(list => {
+    list.querySelectorAll('.manage-item').forEach(el => allIds.push(el.dataset.habitId));
+  });
+  data.habits = allIds.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
+
+  saveData(data);
+  dragState = null;
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend', onDragEnd);
+
+  // Re-render to clean up empty drop zones etc.
+  setTimeout(() => renderManage(), 100);
+}
+
+// ===== CHAIN ASSIGN MODAL =====
+let assigningHabitId = null;
+function openChainAssign(id) {
+  assigningHabitId = id;
+  const h = data.habits.find(x => x.id === id);
+  const opts = document.getElementById('chain-options');
+  opts.innerHTML = '';
+
+  // Standalone option
+  const standalone = document.createElement('div');
+  standalone.className = 'chain-option' + (!h.chain ? ' selected' : '');
+  standalone.textContent = '📌 獨立習慣（不屬於任何鏈條）';
+  standalone.onclick = () => assignChain(null);
+  opts.appendChild(standalone);
+
+  data.chains.forEach(c => {
+    const opt = document.createElement('div');
+    opt.className = 'chain-option' + (h.chain === c.id ? ' selected' : '');
+    opt.textContent = `🔗 ${c.name}`;
+    opt.onclick = () => assignChain(c.id);
+    opts.appendChild(opt);
+  });
+
+  openModal('chain-modal');
+}
+
+function assignChain(chainId) {
+  const h = data.habits.find(x => x.id === assigningHabitId);
+  if (h) h.chain = chainId;
+  saveData(data);
+  closeModal('chain-modal');
+  renderManage();
+}
+
+function rebuildChainSelect() {
+  const chainSel = document.getElementById('new-habit-chain');
+  chainSel.innerHTML = '<option value="">獨立習慣（不加入鏈條）</option>';
+  data.chains.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = `加入「${c.name}」`;
+    chainSel.appendChild(opt);
+  });
+  const newOpt = document.createElement('option');
+  newOpt.value = '__new__'; newOpt.textContent = '＋ 建立新鏈條';
+  chainSel.appendChild(newOpt);
+
+  chainSel.onchange = () => {
+    document.getElementById('new-chain-name').style.display =
+      chainSel.value === '__new__' ? 'block' : 'none';
+  };
+}
+
+// Add habit
+function addHabit() {
+  const nameEl = document.getElementById('new-habit-name');
+  const name = nameEl.value.trim();
+  if (!name) { nameEl.focus(); return; }
+
+  const chainSel = document.getElementById('new-habit-chain');
+  let chainId = chainSel.value;
+
+  if (chainId === '__new__') {
+    const newChainName = document.getElementById('new-chain-name').value.trim();
+    if (!newChainName) { document.getElementById('new-chain-name').focus(); return; }
+    chainId = 'chain_' + Date.now();
+    data.chains.push({ id: chainId, name: newChainName });
+    document.getElementById('new-chain-name').value = '';
+    document.getElementById('new-chain-name').style.display = 'none';
+  }
+
+  const id = 'h_' + Date.now();
+  data.habits.push({
+    id, name,
+    chain: chainId || null,
+    nameHistory: [{ name, changedAt: today() }],
+    records: {}
+  });
+  saveData(data);
+  nameEl.value = '';
+  chainSel.value = '';
+  renderManage();
+}
+
+// Rename
+let renamingId = null;
+function openRename(id) {
+  renamingId = id;
+  const h = data.habits.find(x => x.id === id);
+  document.getElementById('rename-input').value = h.name;
+  openModal('rename-modal');
+  setTimeout(() => document.getElementById('rename-input').focus(), 350);
+}
+function confirmRename() {
+  const newName = document.getElementById('rename-input').value.trim();
+  if (!newName || !renamingId) return;
+  const h = data.habits.find(x => x.id === renamingId);
+  if (h.name === newName) { closeModal('rename-modal'); return; }
+  h.name = newName;
+  h.nameHistory.push({ name: newName, changedAt: today() });
+  saveData(data);
+  closeModal('rename-modal');
+  renderManage();
+}
+
+// Delete
+let deletingId = null;
+function openDelete(id) {
+  deletingId = id;
+  const h = data.habits.find(x => x.id === id);
+  document.getElementById('delete-name').textContent = h.name;
+  openModal('delete-modal');
+}
+function confirmDelete() {
+  data.habits = data.habits.filter(x => x.id !== deletingId);
+  // Clean empty chains
+  const usedChains = new Set(data.habits.map(h => h.chain).filter(Boolean));
+  data.chains = data.chains.filter(c => usedChains.has(c.id));
+  saveData(data);
+  closeModal('delete-modal');
+  renderManage();
+}
+
+// ===== BACKUP PAGE =====
+function renderBackupInfo() {
+  const totalRecords = data.habits.reduce((sum, h) => sum + Object.keys(h.records).length, 0);
+  document.getElementById('export-info').textContent =
+    `目前有 ${data.habits.length} 個習慣、${totalRecords} 筆打卡紀錄`;
+}
+
+function exportBackup() {
+  const filename = `ProHabs_備份_${today()}.json`;
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✅ 備份已下載！');
+}
+
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.habits || !Array.isArray(imported.habits)) {
+        showToast('❌ 檔案格式錯誤');
+        return;
+      }
+      if (!confirm(`確定要匯入備份嗎？\n目前的 ${data.habits.length} 個習慣資料將被覆蓋。`)) {
+        input.value = '';
+        return;
+      }
+      saveData(imported);
+      showToast('✅ 匯入成功！重新載入中...');
+      setTimeout(() => location.reload(), 1200);
+    } catch {
+      showToast('❌ 無法讀取檔案');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('backup-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Modal helpers
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// Enter key for inputs
+document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
+document.getElementById('rename-input').addEventListener('keydown', e => { if (e.key === 'Enter') confirmRename(); });
+
+// Init
+renderToday();
+</script>
+</body>
+</html>
