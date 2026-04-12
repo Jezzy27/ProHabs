@@ -1013,7 +1013,11 @@ const STORAGE_KEY = 'habitData_v2';
 
 function loadData() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultData();
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaultData();
+    if (!d.chains) d.chains = [];
+    if (!d.habits) d.habits = [];
+    if (d.totalCoins == null) d.totalCoins = 0;
+    return d;
   } catch { return getDefaultData(); }
 }
 
