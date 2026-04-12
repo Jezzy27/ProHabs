@@ -886,15 +886,8 @@
     <div class="target-row">
       <input type="number" class="text-input target-num-input" id="settings-target-num" placeholder="數量" min="1" max="999">
       <select class="chain-select target-unit-select" id="settings-target-unit">
-        <option value="">無單位</option>
         <option value="分鐘">分鐘</option>
-        <option value="次">次</option>
-        <option value="組">組</option>
-        <option value="頁">頁</option>
-        <option value="題">題</option>
-        <option value="杯">杯</option>
-        <option value="公里">公里</option>
-        <option value="個">個</option>
+        <option value="其他">其他</option>
       </select>
     </div>
 
@@ -939,14 +932,14 @@
 <script>
 // ===== COLOR PALETTE =====
 const HABIT_COLORS = {
+  red:    { bg: '#FFE8E8', done: '#FFC8C8', border: '#F08888', accent: '#EF4444' },
+  orange: { bg: '#FFF4E8', done: '#FFE8C4', border: '#F0B870', accent: '#F59E0B' },
+  yellow: { bg: '#FFFBE8', done: '#FFF3C4', border: '#F0D870', accent: '#CA8A04' },
   green:  { bg: '#E8F8EE', done: '#C8F0D8', border: '#8ED4AA', accent: '#2EAD5C' },
   teal:   { bg: '#E6F8F6', done: '#C0EDE9', border: '#80CCCA', accent: '#0D9488' },
   blue:   { bg: '#E8F2FF', done: '#C8DFFF', border: '#88B8F0', accent: '#3B82F6' },
   purple: { bg: '#F2E8FF', done: '#E2C8FF', border: '#B888F0', accent: '#8B5CF6' },
   pink:   { bg: '#FFE8F4', done: '#FFC8E4', border: '#F088B4', accent: '#EC4899' },
-  red:    { bg: '#FFE8E8', done: '#FFC8C8', border: '#F08888', accent: '#EF4444' },
-  orange: { bg: '#FFF4E8', done: '#FFE8C4', border: '#F0B870', accent: '#F59E0B' },
-  yellow: { bg: '#FFFBE8', done: '#FFF3C4', border: '#F0D870', accent: '#CA8A04' },
 };
 
 // ===== DATA LAYER =====
@@ -1638,6 +1631,7 @@ function addHabit() {
   nameEl.value = '';
   closeModal('add-habit-modal');
   renderManage();
+  setTimeout(() => openHabitSettings(id), 320);
 }
 
 // Add chain
@@ -1664,7 +1658,7 @@ function openHabitSettings(id) {
   settingsColor = h.color || 'green';
   settingsDays = h.days ? [...h.days] : [0,1,2,3,4,5,6];
   document.getElementById('settings-target-num').value = h.targetNum || '';
-  document.getElementById('settings-target-unit').value = h.targetUnit || '';
+  document.getElementById('settings-target-unit').value = h.targetUnit || '分鐘';
   document.getElementById('settings-enddate').value = h.endDate || '';
   document.getElementById('settings-paused').checked = !!h.paused;
   document.getElementById('settings-resumedate').value = h.resumeDate || '';
@@ -1731,8 +1725,8 @@ function saveHabitSettings() {
   h.days = settingsDays.length ? settingsDays : [0,1,2,3,4,5,6];
   const tNum = parseInt(document.getElementById('settings-target-num').value);
   const tUnit = document.getElementById('settings-target-unit').value;
-  h.targetNum = (tNum > 0 && tUnit) ? tNum : null;
-  h.targetUnit = (tNum > 0 && tUnit) ? tUnit : null;
+  h.targetNum = tNum > 0 ? tNum : null;
+  h.targetUnit = tNum > 0 ? tUnit : null;
   h.endDate = document.getElementById('settings-enddate').value || null;
   h.paused = document.getElementById('settings-paused').checked;
   h.resumeDate = h.paused ? (document.getElementById('settings-resumedate').value || null) : null;
