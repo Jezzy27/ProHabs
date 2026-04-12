@@ -12,16 +12,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #EAF0E6;
-    --card: #FFFFFF;
-    --primary: #4F7048;
-    --primary-light: #D0E5C8;
-    --text: #1E3A1E;
+    --bg: #FFFFFF;
+    --card: #F4FAF2;
+    --primary: #2EAD5C;
+    --primary-light: #C8F0D8;
+    --text: #1A3319;
     --text-sub: #7A9070;
     --radius-card: 20px;
-    --radius-btn: 12px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.06);
-    --nav-h: 60px;
+    --radius-btn: 14px;
+    --shadow: 0 2px 12px rgba(46,173,92,0.10), 0 1px 3px rgba(0,0,0,0.05);
+    --nav-h: 80px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
@@ -38,91 +38,99 @@
 
   /* Header */
   .header {
-    padding: env(safe-area-inset-top, 16px) 20px 12px;
-    padding-top: max(env(safe-area-inset-top), 16px);
-    background: var(--bg);
+    padding: env(safe-area-inset-top, 16px) 20px 16px;
+    padding-top: max(env(safe-area-inset-top), 20px);
+    background: #FFFFFF;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-  .header p { color: var(--text-sub); font-size: 13px; margin-top: 2px; }
+  .header-text h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; color: var(--text); }
+  .header-text p { color: var(--text-sub); font-size: 13px; margin-top: 3px; font-weight: 400; }
+  /* fallback for pages without header-text wrapper */
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; }
+  .header p { color: var(--text-sub); font-size: 13px; margin-top: 3px; }
 
   /* Bottom Nav */
   .bottom-nav {
-    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 430px;
+    position: fixed;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    width: calc(100% - 40px); max-width: 390px;
     background: var(--card);
     display: flex;
-    height: calc(var(--nav-h) + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
-    box-shadow: 0 -1px 0 rgba(0,0,0,0.06);
+    height: 62px;
+    border-radius: 22px;
+    box-shadow: 0 6px 28px rgba(46,173,92,0.15), 0 1px 8px rgba(0,0,0,0.06);
     z-index: 100;
+    padding: 0 6px;
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; cursor: pointer; border: none; background: none;
+    gap: 3px; cursor: pointer; border: none; background: none;
     color: var(--text-sub); font-size: 11px; font-family: inherit;
     transition: color 0.2s;
+    padding: 8px 0;
   }
-  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item svg { width: 20px; height: 20px; }
   .nav-item.active { color: var(--primary); }
   .nav-item.active .nav-icon-wrap {
     background: var(--primary-light);
-    border-radius: 12px;
-    padding: 6px 16px;
+    border-radius: 14px;
+    padding: 5px 14px;
   }
-  .nav-icon-wrap { padding: 6px 16px; }
+  .nav-icon-wrap { padding: 5px 8px; transition: background 0.2s; }
 
   /* Cards */
   .card {
     background: var(--card);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow);
-    padding: 14px 16px;
-    margin: 0 16px 8px;
+    padding: 18px 20px;
+    margin: 0 16px 12px;
   }
 
   /* ===== TODAY PAGE ===== */
   .today-stats {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    padding: 0 16px; margin-bottom: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 0 16px; margin-bottom: 12px;
   }
   .stat-card {
-    background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 12px 16px;
-    display: flex; flex-direction: column; gap: 2px;
+    background: var(--primary-light); border-radius: var(--radius-card);
+    padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 4px;
   }
-  .stat-num { font-size: 28px; font-weight: 700; color: var(--primary); line-height: 1; }
-  .stat-label { font-size: 12px; color: var(--text-sub); }
+  .stat-num { font-size: 34px; font-weight: 700; color: var(--primary); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--primary); opacity: 0.65; margin-top: 2px; font-weight: 500; }
 
-  .progress-bar-wrap { margin: 0 16px 8px; }
-  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
-  .progress-bar { height: 6px; background: #C8DCBF; border-radius: 99px; overflow: hidden; }
+  .progress-bar-wrap { margin: 0 16px 12px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; font-weight: 500; }
+  .progress-bar { height: 7px; background: #C8F0D8; border-radius: 99px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
 
   /* Chain group */
-  .chain-group { margin: 0 16px 8px; }
+  .chain-group { margin: 0 16px 12px; }
   .chain-header {
     display: flex; align-items: center; gap: 8px;
-    padding: 0 4px; margin-bottom: 6px;
+    padding: 0 4px; margin-bottom: 8px;
   }
-  .chain-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; text-transform: uppercase; }
-  .chain-line { flex: 1; height: 1px; background: #C8DCBF; }
+  .chain-label { font-size: 11px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.8px; text-transform: uppercase; }
+  .chain-line { flex: 1; height: 1px; background: #C8F0D8; }
 
   .habit-card {
-    background: var(--card); border-radius: 14px;
-    box-shadow: var(--shadow); padding: 12px 14px;
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 6px; cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
+    background: var(--card); border-radius: 16px;
+    box-shadow: var(--shadow); padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
     position: relative; overflow: hidden;
     user-select: none;
   }
-  .habit-card:active { transform: scale(0.98); }
+  .habit-card:active { transform: scale(0.985); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
   .habit-card.done { background: var(--primary-light); }
   .habit-card.done .habit-name { text-decoration: line-through; color: var(--text-sub); }
 
   .check-circle {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 2.5px solid #D5C9C0; flex-shrink: 0;
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid #A0DDB8; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     background: transparent;
@@ -133,7 +141,7 @@
   .check-circle svg { opacity: 0; transform: scale(0); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
   .habit-card.done .check-circle svg { opacity: 1; transform: scale(1); }
 
-  .habit-name { font-size: 15px; font-weight: 500; flex: 1; }
+  .habit-name { font-size: 15px; font-weight: 500; flex: 1; line-height: 1.3; }
 
   /* Arrow connector */
   .chain-arrow {
@@ -181,9 +189,9 @@
 
   /* B: 柔性文案 */
   .encourage-card {
-    margin: 0 16px 12px; background: var(--card);
+    margin: 0 16px 14px; background: var(--card);
     border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 18px 20px; display: none;
+    padding: 20px 22px; display: none;
   }
   .encourage-card.show { display: block; }
   .encourage-text { font-size: 15px; line-height: 1.7; color: var(--text); }
@@ -191,9 +199,9 @@
 
   /* C: 週熱度圓點 */
   .week-dots-card {
-    margin: 0 16px 12px; background: var(--card);
+    margin: 0 16px 14px; background: var(--card);
     border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 18px 20px; display: none;
+    padding: 20px 22px; display: none;
   }
   .week-dots-card.show { display: block; }
   .week-dots-title { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 14px; letter-spacing: 0.4px; }
@@ -213,9 +221,9 @@
 
   /* A: 完成率條 */
   .rate-card {
-    margin: 0 16px 12px; background: var(--card);
+    margin: 0 16px 14px; background: var(--card);
     border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 18px 20px; display: none;
+    padding: 20px 22px; display: none;
   }
   .rate-card.show { display: block; }
   .rate-row { display: flex; flex-direction: column; gap: 14px; }
@@ -242,9 +250,9 @@
   .cal-btn {
     width: 36px; height: 36px; border-radius: 50%; border: none;
     background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: var(--text); font-size: 16px; transition: background 0.2s;
+    color: var(--text); font-size: 18px; font-weight: 600; transition: background 0.2s;
   }
-  .cal-btn:active { background: #C8DCBF; }
+  .cal-btn:active { background: #D8EDD0; }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; color: var(--text-sub); padding: 4px 0 8px; font-weight: 500; }
   .cal-day {
@@ -303,8 +311,8 @@
 
   .manage-item {
     background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 14px 14px 14px 4px;
-    margin-bottom: 8px;
+    box-shadow: var(--shadow); padding: 16px 16px 16px 4px;
+    margin-bottom: 10px;
     display: flex; align-items: flex-start; gap: 0;
     transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
     position: relative;
@@ -429,7 +437,7 @@
   }
 
   /* Section scroll */
-  .scroll-area { flex: 1; overflow-y: auto; padding-top: 4px; padding-bottom: 16px; }
+  .scroll-area { flex: 1; overflow-y: auto; padding-top: 8px; padding-bottom: 16px; }
   .scroll-area::-webkit-scrollbar { display: none; }
 
   /* Today date display */
@@ -443,8 +451,8 @@
   .backup-section { margin: 0 16px 16px; }
   .backup-card {
     background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 24px 20px;
-    margin-bottom: 12px;
+    box-shadow: var(--shadow); padding: 24px 22px;
+    margin-bottom: 14px;
   }
   .backup-card-title {
     font-size: 16px; font-weight: 700; margin-bottom: 6px;
@@ -464,6 +472,21 @@
     font-size: 12px; color: var(--text-sub); text-align: center;
     margin-top: 10px; line-height: 1.5;
   }
+  /* FAB */
+  .fab {
+    position: fixed;
+    right: 28px;
+    bottom: calc(var(--nav-h) + 6px);
+    width: 58px; height: 58px; border-radius: 50%;
+    background: var(--primary);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(46,173,92,0.45);
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 90;
+  }
+  .fab:active { transform: scale(0.92); box-shadow: 0 3px 10px rgba(46,173,92,0.3); }
+
   .backup-toast {
     position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%);
     background: #2C1A0E; color: white; padding: 12px 22px; border-radius: 99px;
@@ -480,8 +503,13 @@
 <!-- ===== TODAY PAGE ===== -->
 <div class="page active" id="page-today">
   <div class="header">
-    <h1>ProHabs</h1>
-    <p class="today-date" id="today-date-display"></p>
+    <div class="header-text">
+      <h1>ProHabs</h1>
+      <p class="today-date" id="today-date-display"></p>
+    </div>
+    <div class="header-avatar">
+      <img src="LOGO.jpg" alt="logo" style="width:40px;height:40px;border-radius:14px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+    </div>
   </div>
   <div class="scroll-area">
     <div class="today-stats">
@@ -577,18 +605,29 @@
   <div class="scroll-area">
     <div class="manage-list" id="manage-list"></div>
 
-    <div class="add-section card" style="margin: 16px;">
-      <div class="add-title">新增習慣</div>
-      <div class="input-row">
-        <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30">
-        <button class="btn-primary" onclick="addHabit()">新增</button>
-      </div>
-      <select class="chain-select" id="new-habit-chain">
-        <option value="">獨立習慣（不加入鏈條）</option>
-        <option value="__new__">＋ 建立新鏈條</option>
-      </select>
-      <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20"
-        style="display:none; margin-top:10px;">
+  </div>
+  <!-- FAB -->
+  <button class="fab" onclick="openAddModal()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+</div>
+
+<!-- 新增習慣 Modal -->
+<div class="modal-overlay" id="add-habit-modal">
+  <div class="modal">
+    <div class="modal-title">新增習慣</div>
+    <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%; margin-bottom:12px;">
+    <select class="chain-select" id="new-habit-chain">
+      <option value="">獨立習慣（不加入鏈條）</option>
+      <option value="__new__">＋ 建立新鏈條</option>
+    </select>
+    <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20"
+      style="display:none; margin-top:10px; width:100%;">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
+      <button class="btn-confirm" onclick="addHabit()">新增</button>
     </div>
   </div>
 </div>
@@ -848,12 +887,12 @@ function makeHabitCard(h, todayStr, chainId) {
   const card = document.createElement('div');
   card.className = 'habit-card' + (isDone ? ' done' : '');
   card.innerHTML = `
+    <div class="habit-name">${h.name}</div>
     <div class="check-circle">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
-    <div class="habit-name">${h.name}</div>
   `;
   card.addEventListener('click', (e) => {
     addRipple(card, e);
@@ -1414,6 +1453,13 @@ function rebuildChainSelect() {
   };
 }
 
+function openAddModal() {
+  rebuildChainSelect();
+  document.getElementById('new-habit-name').value = '';
+  document.getElementById('add-habit-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-habit-name').focus(), 300);
+}
+
 // Add habit
 function addHabit() {
   const nameEl = document.getElementById('new-habit-name');
@@ -1442,6 +1488,7 @@ function addHabit() {
   saveData(data);
   nameEl.value = '';
   chainSel.value = '';
+  closeModal('add-habit-modal');
   renderManage();
 }
 
