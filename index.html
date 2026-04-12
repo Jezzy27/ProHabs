@@ -846,7 +846,7 @@
       </svg>
       <div class="timer-display" id="timer-display">2:00</div>
     </div>
-    <p class="timer-hint">先做兩分鐘，開始就是成功</p>
+    <p class="timer-hint" id="timer-hint">先做兩分鐘，開始就是成功</p>
     <div class="timer-btns">
       <button class="timer-btn-cancel" onclick="cancelTimer()">取消</button>
       <button class="timer-btn-main" id="timer-main-btn" onclick="toggleTimer()">開始</button>
@@ -887,6 +887,7 @@
       <input type="number" class="text-input target-num-input" id="settings-target-num" placeholder="數量" min="1" max="999">
       <select class="chain-select target-unit-select" id="settings-target-unit">
         <option value="分鐘">分鐘</option>
+        <option value="秒">秒</option>
         <option value="其他">其他</option>
       </select>
     </div>
@@ -1085,7 +1086,7 @@ function makeHabitCard(h, todayStr, chainId) {
   card.className = 'habit-card' + (isDone ? ' done' : '');
   const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
   card.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
-  const hasTimer = h.targetUnit === '分鐘';
+  const hasTimer = h.targetUnit === '分鐘' || h.targetUnit === '秒';
   const targetLabel = h.targetNum && h.targetUnit
     ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
   card.innerHTML = `
@@ -1104,7 +1105,9 @@ function makeHabitCard(h, todayStr, chainId) {
   if (hasTimer) {
     card.querySelector('.habit-timer-btn').addEventListener('click', e => {
       e.stopPropagation();
-      openTimer(h.id, h.name, h.targetNum);
+      const isSec = h.targetUnit === '秒';
+      const targetSecs = isSec ? h.targetNum : (h.targetNum || 0) * 60;
+      openTimer(h.id, h.name, targetSecs, `${h.targetNum} ${h.targetUnit}`, isSec);
     });
   }
   card.addEventListener('click', (e) => {
@@ -1822,30 +1825,43 @@ const ENCOURAGEMENTS = [
   '已經熱身完畢，全力以赴！',
 ];
 let timerHabitId = null;
-let timerTargetMins = 0;
+let timerTargetSecs = 0;
+let timerTargetLabel = '';
+let timerIsSec = false;  // true = 秒模式（數上去）, false = 分鐘模式（兩分鐘→倒數）
 let timerInterval = null;
-let timerElapsed = 0;   // phase1: 已過秒數 (0→120)
-let timerRemaining = 0; // phase2: 剩餘秒數
-let timerPhase = 1;     // 1 or 2
+let timerElapsed = 0;    // phase1 計時 / sec模式總計時
+let timerRemaining = 0;  // phase2 剩餘秒數
+let timerPhase = 1;      // 1 or 2
 let timerRunning = false;
+let timerGoalReached = false; // sec模式：是否已達標
 
-function openTimer(habitId, habitName, targetMins) {
+function openTimer(habitId, habitName, targetSecs, targetLabel, isSec) {
   timerHabitId = habitId;
-  timerTargetMins = targetMins || 0;
+  timerTargetSecs = targetSecs || 0;
+  timerTargetLabel = targetLabel || '';
+  timerIsSec = !!isSec;
   timerElapsed = 0;
   timerPhase = 1;
   timerRunning = false;
+  timerGoalReached = false;
   clearInterval(timerInterval);
 
   document.getElementById('timer-habit-name').textContent = habitName;
-  document.getElementById('timer-subtitle').textContent = '兩分鐘法則';
-  document.getElementById('timer-hint').textContent = '先做兩分鐘，開始就是成功';
-  document.getElementById('timer-display').textContent = '0:00';
-  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
+  document.getElementById('timer-early-btn').style.display = 'none';
   const btn = document.getElementById('timer-main-btn');
   btn.textContent = '開始';
   btn.onclick = toggleTimer;
   btn.style.background = '#2EAD5C';
+
+  if (timerIsSec) {
+    document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetLabel}`;
+    document.getElementById('timer-hint').textContent = '開始就是成功，先做做看！';
+  } else {
+    document.getElementById('timer-subtitle').textContent = '兩分鐘法則';
+    document.getElementById('timer-hint').textContent = '先做兩分鐘，開始就是成功';
+  }
+  document.getElementById('timer-display').textContent = '0:00';
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
   document.getElementById('timer-overlay').classList.add('open');
 }
 
@@ -1863,7 +1879,24 @@ function toggleTimer() {
 }
 
 function timerTick() {
-  if (timerPhase === 1) {
+  if (timerIsSec) {
+    // 秒模式：一路數上去，到達目標給鼓勵，繼續計時
+    timerElapsed++;
+    const progress = timerTargetSecs > 0
+      ? Math.min(timerElapsed / timerTargetSecs, 1) : 0;
+    document.getElementById('timer-ring-progress').style.strokeDashoffset =
+      CIRCUMFERENCE * (1 - progress);
+    const m = Math.floor(timerElapsed / 60);
+    const s = timerElapsed % 60;
+    document.getElementById('timer-display').textContent =
+      `${m}:${String(s).padStart(2,'0')}`;
+    if (!timerGoalReached && timerElapsed >= timerTargetSecs) {
+      timerGoalReached = true;
+      const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+      document.getElementById('timer-hint').textContent = enc;
+      document.getElementById('timer-subtitle').textContent = '達標！繼續加油 💪';
+    }
+  } else if (timerPhase === 1) {
     timerElapsed++;
     const progress = timerElapsed / PHASE1_TOTAL;
     document.getElementById('timer-ring-progress').style.strokeDashoffset =
@@ -1873,7 +1906,7 @@ function timerTick() {
     document.getElementById('timer-display').textContent =
       `${m}:${String(s).padStart(2,'0')}`;
     if (timerElapsed >= PHASE1_TOTAL) {
-      if (timerTargetMins > 0) {
+      if (timerTargetSecs > 0) {
         enterPhase2();
       } else {
         clearInterval(timerInterval);
@@ -1883,7 +1916,7 @@ function timerTick() {
     }
   } else {
     timerRemaining--;
-    const total = timerTargetMins * 60;
+    const total = timerTargetSecs;
     const progress = (total - timerRemaining) / total;
     document.getElementById('timer-ring-progress').style.strokeDashoffset =
       CIRCUMFERENCE * (1 - progress);
@@ -1901,9 +1934,9 @@ function timerTick() {
 
 function enterPhase2() {
   timerPhase = 2;
-  timerRemaining = timerTargetMins * 60;
+  timerRemaining = timerTargetSecs;
   document.getElementById('timer-ring-progress').style.strokeDashoffset = 0;
-  document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetMins} 分鐘`;
+  document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetLabel}`;
   const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
   document.getElementById('timer-hint').textContent = enc;
 }
