@@ -165,6 +165,9 @@
     outline: none; transition: border-color 0.2s;
   }
   .settings-date-input:focus { border-color: var(--primary); }
+  .target-row { display: flex; gap: 10px; }
+  .target-num-input { width: 90px; flex-shrink: 0; text-align: center; }
+  .target-unit-select { flex: 1; }
   .pause-row { display: flex; align-items: center; }
   .pause-toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
   .pause-toggle-wrap input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; }
@@ -175,6 +178,12 @@
   }
 
   .habit-name { font-size: 15px; font-weight: 500; flex: 1; line-height: 1.3; }
+  .habit-target-tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    color: var(--hc-accent, var(--primary)); background: var(--hc-done, var(--primary-light));
+    padding: 2px 7px; border-radius: 99px; margin-left: 8px;
+    vertical-align: middle; opacity: 0.85;
+  }
 
   /* Arrow connector */
   .chain-arrow {
@@ -560,6 +569,12 @@
     transition: opacity 0.2s;
   }
   .timer-btn-main:active { opacity: 0.85; }
+  .timer-btn-early {
+    background: none; border: 1.5px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.45);
+    font-family: inherit; font-size: 14px; padding: 10px 24px; border-radius: 99px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .timer-btn-early:active { border-color: rgba(255,255,255,0.5); color: rgba(255,255,255,0.7); }
   .habit-timer-btn {
     width: 30px; height: 30px; border-radius: 50%; border: none;
     background: transparent; color: var(--hc-border, #A0DDB8);
@@ -822,7 +837,7 @@
 <!-- 兩分鐘計時器 -->
 <div class="timer-overlay" id="timer-overlay">
   <div class="timer-content">
-    <div class="timer-subtitle">兩分鐘法則</div>
+    <div class="timer-subtitle" id="timer-subtitle">兩分鐘法則</div>
     <div class="timer-habit-name" id="timer-habit-name"></div>
     <div class="timer-ring-wrap">
       <svg class="timer-ring" viewBox="0 0 240 240">
@@ -836,6 +851,9 @@
       <button class="timer-btn-cancel" onclick="cancelTimer()">取消</button>
       <button class="timer-btn-main" id="timer-main-btn" onclick="toggleTimer()">開始</button>
     </div>
+    <button class="timer-btn-early" id="timer-early-btn" onclick="checkInAndClose()" style="display:none;">
+      提前打卡完成
+    </button>
   </div>
 </div>
 
@@ -862,6 +880,22 @@
       <button class="day-toggle" data-d="5" onclick="toggleDay(5)">五</button>
       <button class="day-toggle" data-d="6" onclick="toggleDay(6)">六</button>
       <button class="day-toggle" data-d="0" onclick="toggleDay(0)">日</button>
+    </div>
+
+    <div class="settings-label">目標量 <span style="font-weight:400;text-transform:none;letter-spacing:0;">（選填）</span></div>
+    <div class="target-row">
+      <input type="number" class="text-input target-num-input" id="settings-target-num" placeholder="數量" min="1" max="999">
+      <select class="chain-select target-unit-select" id="settings-target-unit">
+        <option value="">無單位</option>
+        <option value="分鐘">分鐘</option>
+        <option value="次">次</option>
+        <option value="組">組</option>
+        <option value="頁">頁</option>
+        <option value="題">題</option>
+        <option value="杯">杯</option>
+        <option value="公里">公里</option>
+        <option value="個">個</option>
+      </select>
     </div>
 
     <div class="settings-label">截止日期 <span style="font-weight:400;text-transform:none;letter-spacing:0;">（選填，過了自動隱藏）</span></div>
@@ -1058,23 +1092,28 @@ function makeHabitCard(h, todayStr, chainId) {
   card.className = 'habit-card' + (isDone ? ' done' : '');
   const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
   card.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
+  const hasTimer = h.targetUnit === '分鐘';
+  const targetLabel = h.targetNum && h.targetUnit
+    ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
   card.innerHTML = `
-    <div class="habit-name">${h.name}</div>
-    <button class="habit-timer-btn">
+    <div class="habit-name">${h.name}${targetLabel}</div>
+    ${hasTimer ? `<button class="habit-timer-btn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
       </svg>
-    </button>
+    </button>` : ''}
     <div class="check-circle">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
   `;
-  card.querySelector('.habit-timer-btn').addEventListener('click', e => {
-    e.stopPropagation();
-    openTimer(h.id, h.name);
-  });
+  if (hasTimer) {
+    card.querySelector('.habit-timer-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      openTimer(h.id, h.name, h.targetNum);
+    });
+  }
   card.addEventListener('click', (e) => {
     addRipple(card, e);
     toggleHabit(h.id, todayStr, chainId);
@@ -1624,6 +1663,8 @@ function openHabitSettings(id) {
   document.getElementById('settings-name').value = h.name;
   settingsColor = h.color || 'green';
   settingsDays = h.days ? [...h.days] : [0,1,2,3,4,5,6];
+  document.getElementById('settings-target-num').value = h.targetNum || '';
+  document.getElementById('settings-target-unit').value = h.targetUnit || '';
   document.getElementById('settings-enddate').value = h.endDate || '';
   document.getElementById('settings-paused').checked = !!h.paused;
   document.getElementById('settings-resumedate').value = h.resumeDate || '';
@@ -1688,6 +1729,10 @@ function saveHabitSettings() {
   }
   h.color = settingsColor;
   h.days = settingsDays.length ? settingsDays : [0,1,2,3,4,5,6];
+  const tNum = parseInt(document.getElementById('settings-target-num').value);
+  const tUnit = document.getElementById('settings-target-unit').value;
+  h.targetNum = (tNum > 0 && tUnit) ? tNum : null;
+  h.targetUnit = (tNum > 0 && tUnit) ? tUnit : null;
   h.endDate = document.getElementById('settings-enddate').value || null;
   h.paused = document.getElementById('settings-paused').checked;
   h.resumeDate = h.paused ? (document.getElementById('settings-resumedate').value || null) : null;
@@ -1772,21 +1817,36 @@ function importBackup(input) {
   reader.readAsText(file);
 }
 
-// ===== 兩分鐘計時器 =====
-const TIMER_TOTAL = 120;
+// ===== 計時器 =====
 const CIRCUMFERENCE = 628.3;
+const PHASE1_TOTAL = 120; // 兩分鐘啟動
+const ENCOURAGEMENTS = [
+  '太棒了！已經開始了，繼續衝！',
+  '你做到了第一步，保持下去！',
+  '動起來就是勝利，繼續！',
+  '兩分鐘已過，你停不下來了！',
+  '已經熱身完畢，全力以赴！',
+];
 let timerHabitId = null;
+let timerTargetMins = 0;
 let timerInterval = null;
-let timerRemaining = TIMER_TOTAL;
+let timerElapsed = 0;   // phase1: 已過秒數 (0→120)
+let timerRemaining = 0; // phase2: 剩餘秒數
+let timerPhase = 1;     // 1 or 2
 let timerRunning = false;
 
-function openTimer(habitId, habitName) {
+function openTimer(habitId, habitName, targetMins) {
   timerHabitId = habitId;
-  timerRemaining = TIMER_TOTAL;
+  timerTargetMins = targetMins || 0;
+  timerElapsed = 0;
+  timerPhase = 1;
   timerRunning = false;
   clearInterval(timerInterval);
+
   document.getElementById('timer-habit-name').textContent = habitName;
-  document.getElementById('timer-display').textContent = '2:00';
+  document.getElementById('timer-subtitle').textContent = '兩分鐘法則';
+  document.getElementById('timer-hint').textContent = '先做兩分鐘，開始就是成功';
+  document.getElementById('timer-display').textContent = '0:00';
   document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
   const btn = document.getElementById('timer-main-btn');
   btn.textContent = '開始';
@@ -1803,41 +1863,79 @@ function toggleTimer() {
   } else {
     timerRunning = true;
     document.getElementById('timer-main-btn').textContent = '暫停';
-    timerInterval = setInterval(() => {
-      timerRemaining--;
-      const progress = (TIMER_TOTAL - timerRemaining) / TIMER_TOTAL;
-      document.getElementById('timer-ring-progress').style.strokeDashoffset =
-        CIRCUMFERENCE * (1 - progress);
-      const m = Math.floor(timerRemaining / 60);
-      const s = timerRemaining % 60;
-      document.getElementById('timer-display').textContent =
-        `${m}:${String(s).padStart(2,'0')}`;
-      if (timerRemaining <= 0) {
+    document.getElementById('timer-early-btn').style.display = 'block';
+    timerInterval = setInterval(timerTick, 1000);
+  }
+}
+
+function timerTick() {
+  if (timerPhase === 1) {
+    timerElapsed++;
+    const progress = timerElapsed / PHASE1_TOTAL;
+    document.getElementById('timer-ring-progress').style.strokeDashoffset =
+      CIRCUMFERENCE * (1 - progress);
+    const m = Math.floor(timerElapsed / 60);
+    const s = timerElapsed % 60;
+    document.getElementById('timer-display').textContent =
+      `${m}:${String(s).padStart(2,'0')}`;
+    if (timerElapsed >= PHASE1_TOTAL) {
+      if (timerTargetMins > 0) {
+        enterPhase2();
+      } else {
         clearInterval(timerInterval);
         timerRunning = false;
         timerComplete();
       }
-    }, 1000);
+    }
+  } else {
+    timerRemaining--;
+    const total = timerTargetMins * 60;
+    const progress = (total - timerRemaining) / total;
+    document.getElementById('timer-ring-progress').style.strokeDashoffset =
+      CIRCUMFERENCE * (1 - progress);
+    const m = Math.floor(timerRemaining / 60);
+    const s = timerRemaining % 60;
+    document.getElementById('timer-display').textContent =
+      `${m}:${String(s).padStart(2,'0')}`;
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      timerComplete();
+    }
   }
+}
+
+function enterPhase2() {
+  timerPhase = 2;
+  timerRemaining = timerTargetMins * 60;
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = 0;
+  document.getElementById('timer-subtitle').textContent = `目標 ${timerTargetMins} 分鐘`;
+  const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+  document.getElementById('timer-hint').textContent = enc;
 }
 
 function timerComplete() {
   document.getElementById('timer-display').textContent = '✓';
+  document.getElementById('timer-hint').textContent = '完成！辛苦了 🎉';
   const btn = document.getElementById('timer-main-btn');
   btn.textContent = '打卡完成！';
   btn.style.background = '#0D9488';
-  btn.onclick = () => {
-    const ts = today();
-    const h = data.habits.find(x => x.id === timerHabitId);
-    if (h && !h.records[ts]) toggleHabit(timerHabitId, ts, h.chain);
-    cancelTimer();
-  };
+  btn.onclick = checkInAndClose;
+}
+
+function checkInAndClose() {
+  const ts = today();
+  const h = data.habits.find(x => x.id === timerHabitId);
+  if (h && !h.records[ts]) toggleHabit(timerHabitId, ts, h.chain);
+  cancelTimer();
 }
 
 function cancelTimer() {
   clearInterval(timerInterval);
   timerRunning = false;
   document.getElementById('timer-overlay').classList.remove('open');
+  document.getElementById('timer-early-btn').style.display = 'none';
+  document.getElementById('timer-main-btn').onclick = toggleTimer;
 }
 
 function showToast(msg) {
