@@ -5,17 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="習慣">
-<title>習慣追蹤</title>
+<meta name="apple-mobile-web-app-title" content="ProHabs">
+<title>ProHabs</title>
+<link rel="icon" type="image/jpeg" href="LOGO.jpg">
+<link rel="apple-touch-icon" href="LOGO.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F2EDE8;
+    --bg: #EAF0E6;
     --card: #FFFFFF;
-    --primary: #D4512A;
-    --primary-light: #F5DDD5;
-    --text: #2C1A0E;
-    --text-sub: #9B8B7E;
+    --primary: #4F7048;
+    --primary-light: #D0E5C8;
+    --text: #1E3A1E;
+    --text-sub: #7A9070;
     --radius-card: 20px;
     --radius-btn: 12px;
     --shadow: 0 2px 12px rgba(0,0,0,0.06);
@@ -36,11 +38,11 @@
 
   /* Header */
   .header {
-    padding: 56px 24px 16px;
+    padding: 44px 20px 12px;
     background: var(--bg);
   }
-  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-  .header p { color: var(--text-sub); font-size: 14px; margin-top: 4px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header p { color: var(--text-sub); font-size: 13px; margin-top: 2px; }
 
   /* Bottom Nav */
   .bottom-nav {
@@ -73,42 +75,42 @@
     background: var(--card);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow);
-    padding: 20px;
-    margin: 0 16px 12px;
+    padding: 14px 16px;
+    margin: 0 16px 8px;
   }
 
   /* ===== TODAY PAGE ===== */
   .today-stats {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    padding: 0 16px; margin-bottom: 12px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    padding: 0 16px; margin-bottom: 8px;
   }
   .stat-card {
     background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 18px 20px;
-    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: var(--shadow); padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 2px;
   }
-  .stat-num { font-size: 36px; font-weight: 700; color: var(--primary); line-height: 1; }
-  .stat-label { font-size: 13px; color: var(--text-sub); }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--primary); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text-sub); }
 
-  .progress-bar-wrap { margin: 0 16px 16px; }
-  .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
-  .progress-bar { height: 8px; background: #EDE8E3; border-radius: 99px; overflow: hidden; }
+  .progress-bar-wrap { margin: 0 16px 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: #C8DCBF; border-radius: 99px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
 
   /* Chain group */
-  .chain-group { margin: 0 16px 12px; }
+  .chain-group { margin: 0 16px 8px; }
   .chain-header {
     display: flex; align-items: center; gap: 8px;
-    padding: 0 4px; margin-bottom: 10px;
+    padding: 0 4px; margin-bottom: 6px;
   }
-  .chain-label { font-size: 13px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; text-transform: uppercase; }
-  .chain-line { flex: 1; height: 1px; background: #E8E0D8; }
+  .chain-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; text-transform: uppercase; }
+  .chain-line { flex: 1; height: 1px; background: #C8DCBF; }
 
   .habit-card {
-    background: var(--card); border-radius: var(--radius-card);
-    box-shadow: var(--shadow); padding: 16px 18px;
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 8px; cursor: pointer;
+    background: var(--card); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 6px; cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
     position: relative; overflow: hidden;
     user-select: none;
@@ -130,12 +132,12 @@
   .check-circle svg { opacity: 0; transform: scale(0); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
   .habit-card.done .check-circle svg { opacity: 1; transform: scale(1); }
 
-  .habit-name { font-size: 16px; font-weight: 500; flex: 1; }
+  .habit-name { font-size: 15px; font-weight: 500; flex: 1; }
 
   /* Arrow connector */
   .chain-arrow {
     display: flex; justify-content: center; align-items: center;
-    margin: -4px 0 4px 20px; color: var(--primary); opacity: 0.5;
+    margin: -2px 0 2px 18px; color: var(--primary); opacity: 0.5;
   }
 
   /* Chain complete celebration */
@@ -156,7 +158,7 @@
   /* Ripple effect */
   .ripple {
     position: absolute; border-radius: 50%;
-    background: rgba(212,81,42,0.15);
+    background: rgba(79,112,72,0.15);
     transform: scale(0);
     animation: rippleAnim 0.5s linear;
     pointer-events: none;
@@ -198,13 +200,13 @@
   .week-dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
   .week-dot {
     width: 36px; height: 36px; border-radius: 50%;
-    background: #EDE8E3; transition: background 0.3s;
+    background: #C8DCBF; transition: background 0.3s;
   }
   .week-dot.w100 { background: var(--primary); }
-  .week-dot.w75  { background: #E07050; }
-  .week-dot.w50  { background: #EAA080; }
-  .week-dot.w25  { background: #F2C8B8; }
-  .week-dot.w0   { background: #EDE8E3; }
+  .week-dot.w75  { background: #6A9B60; }
+  .week-dot.w50  { background: #96BF8C; }
+  .week-dot.w25  { background: #BDD9B6; }
+  .week-dot.w0   { background: #C8DCBF; }
   .week-dot-label { font-size: 11px; color: var(--text-sub); }
   .week-dot-pct { font-size: 12px; font-weight: 700; color: var(--text); }
 
@@ -219,7 +221,7 @@
   .rate-item-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
   .rate-item-name { color: var(--text-sub); font-weight: 500; }
   .rate-item-pct { color: var(--primary); font-weight: 700; }
-  .rate-bar { height: 10px; background: #EDE8E3; border-radius: 99px; overflow: hidden; }
+  .rate-bar { height: 10px; background: #C8DCBF; border-radius: 99px; overflow: hidden; }
   .rate-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.5s ease; }
 
   /* 分隔線 */
@@ -227,7 +229,7 @@
     display: flex; align-items: center; gap: 10px;
     margin: 4px 16px 12px; 
   }
-  .stats-divider-line { flex: 1; height: 1px; background: #E8E0D8; }
+  .stats-divider-line { flex: 1; height: 1px; background: #C8DCBF; }
   .stats-divider-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.4px; }
 
   /* 每日總覽月曆 */
@@ -241,7 +243,7 @@
     background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
     color: var(--text); font-size: 16px; transition: background 0.2s;
   }
-  .cal-btn:active { background: #E8E0D8; }
+  .cal-btn:active { background: #C8DCBF; }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
   .cal-dow { text-align: center; font-size: 12px; color: var(--text-sub); padding: 4px 0 8px; font-weight: 500; }
   .cal-day {
@@ -252,9 +254,9 @@
   .cal-day:active { transform: scale(0.9); }
   /* 完成率顏色 */
   .cal-day.rate-full  { background: var(--primary); color: white; font-weight: 700; }
-  .cal-day.rate-high  { background: #E07050; color: white; }
-  .cal-day.rate-mid   { background: #F2C8B8; color: var(--text); }
-  .cal-day.rate-low   { background: #FAE8E0; color: var(--text-sub); }
+  .cal-day.rate-high  { background: #6A9B60; color: white; }
+  .cal-day.rate-mid   { background: #BDD9B6; color: var(--text); }
+  .cal-day.rate-low   { background: #DFF0DA; color: var(--text-sub); }
   .cal-day.rate-none  { background: transparent; color: var(--text-sub); }
   .cal-day.today-marker::after {
     content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
@@ -296,7 +298,7 @@
     padding: 8px 4px; margin-bottom: 4px;
   }
   .standalone-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; }
-  .standalone-line { flex: 1; height: 1px; background: #E8E0D8; }
+  .standalone-line { flex: 1; height: 1px; background: #C8DCBF; }
 
   .manage-item {
     background: var(--card); border-radius: var(--radius-card);
@@ -334,12 +336,12 @@
     font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
   }
   .btn-rename { background: var(--primary-light); color: var(--primary); }
-  .btn-history { background: #F0EBE5; color: var(--text-sub); }
+  .btn-history { background: #E0EDDB; color: var(--text-sub); }
   .btn-delete { background: #FDECEA; color: #E53935; }
-  .btn-chain { background: #EEF0F5; color: #555; }
+  .btn-chain { background: #E0EDDB; color: var(--text); }
 
   .history-panel {
-    margin-top: 12px; border-top: 1px solid #F0EAE3; padding-top: 12px;
+    margin-top: 12px; border-top: 1px solid #C8DCBF; padding-top: 12px;
     display: none;
   }
   .history-panel.open { display: block; }
@@ -362,7 +364,7 @@
   /* Chain assign modal options */
   .chain-option {
     padding: 14px 16px; border-radius: var(--radius-btn);
-    border: 2px solid #EDE8E3; margin-bottom: 8px;
+    border: 2px solid #C8DCBF; margin-bottom: 8px;
     cursor: pointer; font-size: 15px; font-weight: 500;
     transition: all 0.15s;
   }
@@ -477,7 +479,7 @@
 <!-- ===== TODAY PAGE ===== -->
 <div class="page active" id="page-today">
   <div class="header">
-    <h1>今日習慣</h1>
+    <h1>ProHabs</h1>
     <p class="today-date" id="today-date-display"></p>
   </div>
   <div class="scroll-area">
