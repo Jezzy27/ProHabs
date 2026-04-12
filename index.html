@@ -536,9 +536,16 @@
     transition: opacity 0.3s, background 1.2s ease;
   }
   .timer-overlay.open { opacity: 1; pointer-events: all; }
-  .timer-overlay.milestone { background: #2D1C00; }
-  .timer-overlay.milestone .timer-ring-progress { stroke: #FACC15; }
-  .timer-overlay.milestone .timer-ring-bg { stroke: rgba(250,204,21,0.15); }
+  .timer-overlay.milestone { background: #FFFFFF; }
+  .timer-overlay.milestone .timer-ring-progress { stroke: #FFC200; }
+  .timer-overlay.milestone .timer-ring-bg { stroke: rgba(255,194,0,0.15); }
+  .timer-overlay.milestone .timer-subtitle,
+  .timer-overlay.milestone .timer-hint { color: rgba(46,173,92,0.6); }
+  .timer-overlay.milestone .timer-habit-name,
+  .timer-overlay.milestone .timer-display { color: #1A3D2B; }
+  .timer-overlay.milestone .timer-btn-cancel { background: rgba(0,0,0,0.06); color: #999; }
+  .timer-overlay.milestone .timer-btn-main { background: #2EAD5C; }
+  .timer-overlay.milestone .timer-btn-early { border-color: rgba(46,173,92,0.3); color: rgba(46,173,92,0.7); }
   .timer-content {
     display: flex; flex-direction: column; align-items: center;
     gap: 20px; padding: 40px 24px; width: 100%; max-width: 360px;
