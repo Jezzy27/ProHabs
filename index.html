@@ -988,7 +988,7 @@
     <div class="coin-modal-handle"></div>
     <div class="coin-modal-header">
       <div class="coin-modal-balance" id="coin-modal-balance">0</div>
-      <div class="coin-modal-balance-label">💰 累積元寶</div>
+      <div class="coin-modal-balance-label"><img src="dollar.png" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">累積金幣</div>
     </div>
 
     <div class="coin-modal-section">
@@ -999,13 +999,13 @@
 
     <div class="coin-modal-section">
       <div class="coin-modal-section-title">賺幣方式</div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 元</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 元</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 元</div></div><div class="earn-rule-amount">1 元/分</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 金幣</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 金幣</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 金幣</div></div><div class="earn-rule-amount">1 金幣/分</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">連續里程碑</div><div class="earn-rule-sub">3天 +10｜7天 +30｜14天 +80<br>30天 +200｜60天 +500｜100天 +1000</div></div><div class="earn-rule-amount">各一次</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 元</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 元</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500</div></div><div class="earn-rule-amount">每月</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 金幣</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 金幣</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500 金幣</div></div><div class="earn-rule-amount">每月</div></div>
     </div>
   </div>
 </div>
@@ -1023,7 +1023,7 @@
       <label class="add-shop-label">目標價格</label>
       <div class="add-shop-price-wrap">
         <input class="add-shop-input" id="shop-item-price" type="number" placeholder="0">
-        <span class="add-shop-unit">元</span>
+        <span class="add-shop-unit">金幣</span>
       </div>
     </div>
     <div class="add-shop-actions">
@@ -1061,7 +1061,7 @@
     <img src="dollar.png" alt="coin" class="coin-reward-img" id="coin-reward-img">
     <div class="coin-reward-earned" id="coin-reward-earned">+0</div>
     <div class="coin-reward-label">本次獲得</div>
-    <div class="coin-reward-total" id="coin-reward-total">累積：0 元</div>
+    <div class="coin-reward-total" id="coin-reward-total">累積：0 金幣</div>
     <button class="coin-reward-close" onclick="closeCoinReward()">收下！</button>
   </div>
 </div>
@@ -2280,7 +2280,7 @@ function checkInAndClose() {
 
 function showCoinReward(earned) {
   document.getElementById('coin-reward-earned').textContent = `+${earned}`;
-  document.getElementById('coin-reward-total').textContent = `累積：${data.totalCoins} 元`;
+  document.getElementById('coin-reward-total').textContent = `累積：${data.totalCoins} 金幣`;
   // re-trigger coin spin animation
   const img = document.getElementById('coin-reward-img');
   img.style.animation = 'none';
@@ -2307,7 +2307,7 @@ function awardCoins(amount, reason) {
 function showRewardToast(amount, reason) {
   const toast = document.createElement('div');
   toast.className = 'reward-toast';
-  toast.innerHTML = `<span style="font-size:20px;">🪙</span><div><div class="reward-toast-amount">+${amount} 元</div><div class="reward-toast-reason">${reason}</div></div>`;
+  toast.innerHTML = `<img src="dollar.png" style="width:24px;height:24px;"><div><div class="reward-toast-amount">+${amount} 金幣</div><div class="reward-toast-reason">${reason}</div></div>`;
   document.body.appendChild(toast);
   requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3200);
@@ -2448,7 +2448,7 @@ function checkPendingNotifs() {
   list.innerHTML = notifs.map(n => `
     <div class="pending-notif-item">
       <div class="pending-notif-reason">${n.reason}</div>
-      <div class="pending-notif-amount">+${n.amount} 元</div>
+      <div class="pending-notif-amount">+${n.amount} 金幣</div>
     </div>`).join('');
   document.getElementById('pending-modal-overlay').classList.add('open');
 }
@@ -2489,7 +2489,7 @@ function renderShop() {
       card.innerHTML = `
         <div class="shop-item-top">
           <div class="shop-item-name">${item.name}</div>
-          <div class="shop-item-price">🪙 ${item.price.toLocaleString()} 元</div>
+          <div class="shop-item-price"><img src="dollar.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px;">${item.price.toLocaleString()} 金幣</div>
         </div>
         <div class="shop-item-badges">
           ${affordable ? '<span class="shop-badge can-buy">可以買了！</span>' : `<span style="font-size:11px;color:var(--text-sub);">已存 ${Math.min(coins,item.price).toLocaleString()} / ${item.price.toLocaleString()}</span>`}
@@ -2556,7 +2556,7 @@ function saveShopItem() {
 function confirmBuy(itemId) {
   const item = data.shopItems.find(x => x.id === itemId);
   if (!item) return;
-  document.getElementById('buy-confirm-text').textContent = `購買「${item.name}」需要 ${item.price.toLocaleString()} 元，購買後將從餘額中扣除。`;
+  document.getElementById('buy-confirm-text').textContent = `購買「${item.name}」需要 ${item.price.toLocaleString()} 金幣，購買後將從餘額中扣除。`;
   document.getElementById('buy-confirm-btn').onclick = () => executeBuy(itemId);
   openModal('buy-confirm-modal');
 }
@@ -2566,7 +2566,7 @@ function executeBuy(itemId) {
   if (!item || item.bought) return;
   if ((data.totalCoins || 0) < item.price) {
     closeModal('buy-confirm-modal');
-    showToast('元寶不足，繼續努力！');
+    showToast('金幣不足，繼續努力！');
     return;
   }
   item.bought = true;
