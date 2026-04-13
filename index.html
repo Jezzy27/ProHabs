@@ -440,6 +440,32 @@
     margin-left: 6px; vertical-align: middle;
   }
 
+  /* 配對卡片 */
+  .pair-card {
+    border-radius: 16px; overflow: hidden;
+    box-shadow: var(--shadow); margin-bottom: 4px;
+    border: 1.5px solid rgba(255,194,0,0.35);
+  }
+  .pair-card-row {
+    background: var(--hc-bg, var(--card));
+    padding: 14px 18px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer; transition: background 0.15s; position: relative; overflow: hidden;
+  }
+  .pair-card-row.done { background: var(--hc-done, #C8F0D8); }
+  .pair-card-row:active { opacity: 0.85; }
+  .pair-card-row .habit-name { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
+  .pair-card-row .habit-target-tag { font-size: 11px; font-weight: 700; color: var(--hc-accent, var(--primary)); background: rgba(255,255,255,0.6); padding: 2px 7px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+  .pair-card-row .habit-elapsed-tag { font-size: 11px; color: var(--text-sub); margin-right: 4px; }
+  .pair-card-row .habit-timer-btn { background: none; border: none; cursor: pointer; color: var(--hc-accent, var(--primary)); padding: 4px; display: flex; align-items: center; }
+  .pair-card-row .check-circle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--hc-border, #C8DCBF); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .pair-card-row.done .check-circle { background: var(--hc-accent, var(--primary)); border-color: var(--hc-accent, var(--primary)); }
+  .pair-card-divider {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px; background: rgba(255,194,0,0.08);
+    border-top: 1px solid rgba(255,194,0,0.2); border-bottom: 1px solid rgba(255,194,0,0.2);
+    font-size: 11px; font-weight: 700; color: #B8860B; height: 26px;
+  }
+
   /* Chain section header */
   .chain-section { margin-bottom: 6px; }
   .chain-section-header {
@@ -1308,6 +1334,8 @@ function renderToday() {
     }
   });
 
+  const renderedIds = new Set();
+
   // Render chains
   data.chains.forEach(chain => {
     const chainHabits = chainMap[chain.id];
@@ -1329,13 +1357,19 @@ function renderToday() {
     group.appendChild(banner);
 
     chainHabits.forEach((h, idx) => {
-      if (idx > 0) {
+      if (renderedIds.has(h.id)) return;
+      if (idx > 0 && !renderedIds.has(chainHabits[idx-1]?.id) === false) {
+        // only add arrow if previous item was rendered solo (not part of a pair that absorbed it)
+      }
+      const beforeCount = group.childElementCount;
+      renderHabitOrPair(h, viewStr, chain.id, renderedIds, group);
+      // Add arrow between items (not before first, not before pair-cards that were just added)
+      if (idx > 0 && group.childElementCount > beforeCount) {
         const arrow = document.createElement('div');
         arrow.className = 'chain-arrow';
         arrow.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
-        group.appendChild(arrow);
+        group.insertBefore(arrow, group.lastElementChild);
       }
-      group.appendChild(makeHabitCard(h, viewStr, chain.id));
     });
 
     list.appendChild(group);
@@ -1349,13 +1383,74 @@ function renderToday() {
     header.className = 'chain-header';
     header.innerHTML = `<div class="chain-line"></div><div class="chain-label">獨立習慣</div><div class="chain-line"></div>`;
     group.appendChild(header);
-    standalone.forEach(h => group.appendChild(makeHabitCard(h, viewStr, null)));
+    standalone.forEach(h => renderHabitOrPair(h, viewStr, null, renderedIds, group));
     list.appendChild(group);
   }
 
   if (habits.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div>還沒有習慣<br>去管理頁面新增吧！</div>`;
   }
+}
+
+function renderHabitOrPair(h, viewStr, chainId, renderedIds, container) {
+  if (renderedIds.has(h.id)) return;
+  if (h.pairedWith) {
+    const partner = data.habits.find(x => x.id === h.pairedWith);
+    if (partner && !renderedIds.has(partner.id)) {
+      // Check partner is also scheduled today
+      const dow = new Date(viewStr + 'T00:00:00').getDay();
+      const partnerDays = partner.days || [0,1,2,3,4,5,6];
+      const partnerScheduled = partnerDays.includes(dow) && !(partner.endDate && partner.endDate < viewStr) && !(partner.paused && (!partner.resumeDate || partner.resumeDate > viewStr));
+      if (partnerScheduled) {
+        container.appendChild(makePairCard(h, partner, viewStr, chainId));
+        renderedIds.add(h.id);
+        renderedIds.add(partner.id);
+        return;
+      }
+    }
+  }
+  container.appendChild(makeHabitCard(h, viewStr, chainId));
+  renderedIds.add(h.id);
+}
+
+function makePairCard(a, b, dateStr, chainId) {
+  const wrap = document.createElement('div');
+  wrap.className = 'pair-card';
+  wrap.appendChild(makePairRow(a, dateStr, chainId));
+  const div = document.createElement('div');
+  div.className = 'pair-card-divider';
+  div.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#B8860B"><path d="M13 2L4.5 13.5H11L10 22L20.5 10H14L13 2Z"/></svg> 同時進行`;
+  wrap.appendChild(div);
+  wrap.appendChild(makePairRow(b, dateStr, chainId));
+  return wrap;
+}
+
+function makePairRow(h, dateStr, chainId) {
+  const rec = h.records[dateStr];
+  const isDone = !!rec;
+  const elapsed = rec && typeof rec === 'object' ? rec.secs : null;
+  const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
+  const row = document.createElement('div');
+  row.className = 'pair-card-row' + (isDone ? ' done' : '');
+  row.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
+  const hasTimer = h.targetUnit === '分鐘' || h.targetUnit === '秒';
+  const targetLabel = h.targetNum && h.targetUnit ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
+  const elapsedLabel = elapsed != null ? `<span class="habit-elapsed-tag">${fmtSecs(elapsed)}</span>` : '';
+  row.innerHTML = `
+    <div class="habit-name">${h.name}${targetLabel}</div>
+    ${hasTimer && !isDone ? `<button class="habit-timer-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></button>` : ''}
+    ${elapsedLabel}
+    <div class="check-circle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+  `;
+  if (hasTimer && !isDone) {
+    row.querySelector('.habit-timer-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      const targetSecs = h.targetUnit === '秒' ? h.targetNum : (h.targetNum || 0) * 60;
+      openTimer(h.id, h.name, targetSecs, `${h.targetNum} ${h.targetUnit}`);
+    });
+  }
+  row.addEventListener('click', e => { addRipple(row, e); toggleHabit(h.id, dateStr, chainId); });
+  return row;
 }
 
 function fmtSecs(s) {
@@ -1374,12 +1469,10 @@ function makeHabitCard(h, todayStr, chainId) {
   const hasTimer = h.targetUnit === '分鐘' || h.targetUnit === '秒';
   const targetLabel = h.targetNum && h.targetUnit
     ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
-  const partner = h.pairedWith ? data.habits.find(x => x.id === h.pairedWith) : null;
-  const pairTag = partner ? `<span class="pair-tag">⚡ ${partner.name}</span>` : '';
   const elapsedLabel = elapsed != null
     ? `<span class="habit-elapsed-tag">${fmtSecs(elapsed)}</span>` : '';
   card.innerHTML = `
-    <div class="habit-name">${h.name}${targetLabel}${pairTag}</div>
+    <div class="habit-name">${h.name}${targetLabel}</div>
     ${hasTimer && !isDone ? `<button class="habit-timer-btn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
         <polygon points="5,3 19,12 5,21"/>
@@ -1427,16 +1520,6 @@ function toggleHabit(id, dateStr, chainId) {
   }
   saveData(data);
   renderToday();
-
-  // Auto-complete paired habit
-  if (h.pairedWith) {
-    const partner = data.habits.find(x => x.id === h.pairedWith);
-    if (partner) {
-      if (wasChecked) { delete partner.records[dateStr]; }
-      else { partner.records[dateStr] = true; }
-      saveData(data);
-    }
-  }
 
   // Rewards (only on check-in, not un-check)
   if (!wasChecked) {
