@@ -80,11 +80,11 @@
   .coin-modal-balance-label { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
   .coin-modal-section { padding: 18px 20px 4px; }
   .coin-modal-section-title { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
-  .earn-rule-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; border-radius: 12px; margin-bottom: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-  .earn-rule-left { font-size: 13px; color: var(--text); flex: 1; }
-  .earn-rule-label { font-weight: 600; }
-  .earn-rule-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
-  .earn-rule-amount { font-size: 14px; font-weight: 800; color: #92680A; white-space: nowrap; margin-left: 12px; }
+  .earn-rule-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: rgba(0,0,0,0.03); border-radius: 10px; margin-bottom: 5px; }
+  .earn-rule-left { font-size: 12px; color: rgba(0,0,0,0.45); flex: 1; }
+  .earn-rule-label { font-weight: 600; color: rgba(0,0,0,0.55); }
+  .earn-rule-sub { font-size: 11px; color: rgba(0,0,0,0.35); margin-top: 2px; }
+  .earn-rule-amount { font-size: 13px; font-weight: 700; color: rgba(146,104,10,0.6); white-space: nowrap; margin-left: 12px; }
 
   /* 商店 */
   .shop-item-card {
@@ -961,6 +961,12 @@
     </div>
 
     <div class="coin-modal-section">
+      <div class="coin-modal-section-title">我的商店</div>
+      <div id="shop-items-list"></div>
+      <button class="add-shop-btn" onclick="openAddShopItem()">＋ 新增商品</button>
+    </div>
+
+    <div class="coin-modal-section">
       <div class="coin-modal-section-title">賺幣方式</div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 元</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 元</div></div>
@@ -969,12 +975,6 @@
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 元</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 元</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500</div></div><div class="earn-rule-amount">每月</div></div>
-    </div>
-
-    <div class="coin-modal-section">
-      <div class="coin-modal-section-title">我的商店</div>
-      <div id="shop-items-list"></div>
-      <button class="add-shop-btn" onclick="openAddShopItem()">＋ 新增商品</button>
     </div>
   </div>
 </div>
