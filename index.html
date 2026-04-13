@@ -1034,13 +1034,14 @@
 </div>
 
 <!-- 購買確認 Modal -->
-<div class="modal-overlay" id="buy-confirm-modal">
-  <div class="modal">
-    <div class="modal-title">確認購買</div>
-    <div id="buy-confirm-text" style="font-size:15px;color:var(--text-sub);text-align:center;padding:8px 0 20px;line-height:1.7;"></div>
-    <div style="display:flex;gap:10px;">
-      <button class="settings-save" style="flex:1;background:rgba(0,0,0,0.07);color:var(--text);" onclick="closeModal('buy-confirm-modal')">取消</button>
-      <button class="settings-save" style="flex:1;background:#FFC200;color:#6B4A00;" id="buy-confirm-btn">購買！</button>
+<div class="add-shop-overlay" id="buy-confirm-modal">
+  <div class="add-shop-dialog" onclick="event.stopPropagation()" style="text-align:center;">
+    <div class="add-shop-icon">🛒</div>
+    <div class="add-shop-title">確認購買</div>
+    <div id="buy-confirm-text" style="font-size:14px;color:var(--text-sub);padding:0 4px 24px;line-height:1.7;"></div>
+    <div class="add-shop-actions">
+      <button class="add-shop-cancel" onclick="closeModal('buy-confirm-modal')">取消</button>
+      <button class="add-shop-confirm" id="buy-confirm-btn">購買！</button>
     </div>
   </div>
 </div>
@@ -2471,34 +2472,62 @@ function closeCoinModal() {
 function renderShop() {
   const coins = data.totalCoins || 0;
   const list = document.getElementById('shop-items-list');
-  if (!data.shopItems || data.shopItems.length === 0) {
-    list.innerHTML = `<div style="text-align:center;color:var(--text-sub);font-size:13px;padding:12px 0 8px;">還沒有商品，新增你想買的東西吧！</div>`;
-    return;
-  }
   list.innerHTML = '';
-  data.shopItems.forEach(item => {
-    const affordable = !item.bought && coins >= item.price;
-    const pct = item.bought ? 100 : Math.min(100, Math.round(coins / item.price * 100));
-    const card = document.createElement('div');
-    card.className = 'shop-item-card' + (affordable ? ' affordable' : '') + (item.bought ? ' bought' : '');
-    card.innerHTML = `
-      <div class="shop-item-top">
-        <div class="shop-item-name">${item.name}</div>
-        <div class="shop-item-price">🪙 ${item.price.toLocaleString()} 元</div>
-      </div>
-      <div class="shop-item-badges">
-        ${item.bought ? '<span class="shop-badge bought-badge">已購買 ✓</span>' : ''}
-        ${affordable ? '<span class="shop-badge can-buy">可以買了！</span>' : ''}
-        ${!item.bought ? `<span style="font-size:11px;color:var(--text-sub);">已存 ${Math.min(coins,item.price).toLocaleString()} / ${item.price.toLocaleString()}</span>` : ''}
-      </div>
-      ${!item.bought ? `<div class="shop-item-progress"><div class="shop-item-progress-track"><div class="shop-item-progress-fill" style="width:${pct}%"></div></div></div>` : ''}
-      <div class="shop-item-actions">
-        ${!item.bought && affordable ? `<button class="shop-btn buy" onclick="confirmBuy('${item.id}')">購買</button>` : ''}
-        <button class="shop-btn delete" onclick="deleteShopItem('${item.id}')">${item.bought ? '刪除' : '移除'}</button>
-      </div>
-    `;
-    list.appendChild(card);
-  });
+
+  const active = (data.shopItems || []).filter(x => !x.bought);
+  const bought = (data.shopItems || []).filter(x => x.bought);
+
+  // ── 待購商品 ──
+  if (active.length === 0) {
+    list.innerHTML += `<div style="text-align:center;color:var(--text-sub);font-size:13px;padding:12px 0 8px;">還沒有商品，新增你想買的東西吧！</div>`;
+  } else {
+    active.forEach(item => {
+      const affordable = coins >= item.price;
+      const pct = Math.min(100, Math.round(coins / item.price * 100));
+      const card = document.createElement('div');
+      card.className = 'shop-item-card' + (affordable ? ' affordable' : '');
+      card.innerHTML = `
+        <div class="shop-item-top">
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-price">🪙 ${item.price.toLocaleString()} 元</div>
+        </div>
+        <div class="shop-item-badges">
+          ${affordable ? '<span class="shop-badge can-buy">可以買了！</span>' : `<span style="font-size:11px;color:var(--text-sub);">已存 ${Math.min(coins,item.price).toLocaleString()} / ${item.price.toLocaleString()}</span>`}
+        </div>
+        <div class="shop-item-progress"><div class="shop-item-progress-track"><div class="shop-item-progress-fill" style="width:${pct}%"></div></div></div>
+        <div class="shop-item-actions">
+          <button class="shop-btn buy" onclick="confirmBuy('${item.id}')" ${affordable ? '' : 'style="opacity:0.45;"'}>購買</button>
+          <button class="shop-btn delete" onclick="deleteShopItem('${item.id}')">移除</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  // ── 購買紀錄 ──
+  if (bought.length > 0) {
+    const sep = document.createElement('div');
+    sep.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-sub);letter-spacing:0.5px;text-transform:uppercase;margin:18px 2px 10px;';
+    sep.textContent = '購買紀錄';
+    list.appendChild(sep);
+    bought.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'shop-item-card bought';
+      card.innerHTML = `
+        <div class="shop-item-top">
+          <div>
+            <div class="shop-item-name">${item.name}</div>
+            ${item.boughtAt ? `<div style="font-size:11px;color:var(--text-sub);margin-top:3px;">${item.boughtAt}</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="shop-badge bought-badge">已購買 ✓</span>
+            <button class="shop-btn delete" style="padding:6px 12px;font-size:12px;" onclick="deleteShopItem('${item.id}')">刪除</button>
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
 }
 
 function openAddShopItem() {
@@ -2535,8 +2564,13 @@ function confirmBuy(itemId) {
 function executeBuy(itemId) {
   const item = data.shopItems.find(x => x.id === itemId);
   if (!item || item.bought) return;
-  if ((data.totalCoins || 0) < item.price) { showToast('元寶不足！'); return; }
+  if ((data.totalCoins || 0) < item.price) {
+    closeModal('buy-confirm-modal');
+    showToast('元寶不足，繼續努力！');
+    return;
+  }
   item.bought = true;
+  item.boughtAt = today();
   data.totalCoins -= item.price;
   saveData(data);
   updateCoinDisplay();
