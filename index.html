@@ -247,69 +247,52 @@
   }
 
   /* ===== STATS PAGE ===== */
-  .stats-select-wrap { margin: 0 16px 12px; }
-  .habit-select {
-    width: 100%; padding: 14px 18px; border-radius: var(--radius-btn);
-    border: none; background: var(--card); box-shadow: var(--shadow);
-    font-family: inherit; font-size: 15px; color: var(--text);
-    appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239B8B7E' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 16px center;
-    cursor: pointer;
+  .stats-summary-row { display: flex; gap: 10px; margin: 0 16px 14px; }
+  .stats-mini-card {
+    flex: 1; background: var(--card); border-radius: var(--radius-card);
+    box-shadow: var(--shadow); padding: 14px 10px; text-align: center;
   }
+  .stats-mini-num { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+  .stats-mini-label { font-size: 10px; color: var(--text-sub); margin-top: 4px; line-height: 1.4; }
 
-  /* B: 柔性文案 */
-  .encourage-card {
+  .stat-habit-card {
     margin: 0 16px 14px; background: var(--card);
     border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 20px 22px; display: none;
+    padding: 18px 18px 14px; border-left: 4px solid transparent;
+    transition: border-color 0.3s;
   }
-  .encourage-card.show { display: block; }
-  .encourage-text { font-size: 15px; line-height: 1.7; color: var(--text); }
-  .encourage-sub { font-size: 13px; color: var(--text-sub); margin-top: 6px; }
+  .stat-habit-card.today-pending { border-left-color: #FFC200; }
+  .stat-habit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .stat-habit-name { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; margin-right: 8px; }
+  .stat-today-badge {
+    font-size: 10px; padding: 3px 8px; border-radius: 99px; white-space: nowrap;
+    background: rgba(255,194,0,0.15); color: #9A6E00; font-weight: 600;
+  }
+  .stat-today-badge.done { background: rgba(46,173,92,0.12); color: var(--primary); }
 
-  /* C: 週熱度圓點 */
-  .week-dots-card {
-    margin: 0 16px 14px; background: var(--card);
-    border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 20px 22px; display: none;
+  .stat-streak-row {
+    display: flex; align-items: center; margin-bottom: 14px;
+    background: rgba(46,173,92,0.06); border-radius: 12px; padding: 12px 0;
   }
-  .week-dots-card.show { display: block; }
-  .week-dots-title { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 14px; letter-spacing: 0.4px; }
-  .week-dots-row { display: flex; justify-content: space-between; align-items: flex-end; }
-  .week-dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
-  .week-dot {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: #C8DCBF; transition: background 0.3s;
-  }
-  .week-dot.w100 { background: var(--primary); }
-  .week-dot.w75  { background: #6A9B60; }
-  .week-dot.w50  { background: #96BF8C; }
-  .week-dot.w25  { background: #BDD9B6; }
-  .week-dot.w0   { background: #C8DCBF; }
-  .week-dot-label { font-size: 11px; color: var(--text-sub); }
-  .week-dot-pct { font-size: 12px; font-weight: 700; color: var(--text); }
+  .stat-streak-block { flex: 1; text-align: center; }
+  .stat-streak-divider { width: 1px; height: 36px; background: rgba(46,173,92,0.2); flex-shrink: 0; }
+  .stat-streak-num { font-size: 30px; font-weight: 800; color: var(--primary); line-height: 1; }
+  .stat-streak-num.best { color: #FFC200; }
+  .stat-streak-label { font-size: 11px; color: var(--text-sub); margin-top: 4px; }
 
-  /* A: 完成率條 */
-  .rate-card {
-    margin: 0 16px 14px; background: var(--card);
-    border-radius: var(--radius-card); box-shadow: var(--shadow);
-    padding: 20px 22px; display: none;
-  }
-  .rate-card.show { display: block; }
-  .rate-row { display: flex; flex-direction: column; gap: 14px; }
-  .rate-item-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-  .rate-item-name { color: var(--text-sub); font-weight: 500; }
-  .rate-item-pct { color: var(--primary); font-weight: 700; }
-  .rate-bar { height: 10px; background: #C8DCBF; border-radius: 99px; overflow: hidden; }
-  .rate-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.5s ease; }
+  .stat-milestone-wrap { margin-bottom: 14px; }
+  .stat-milestone-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .stat-milestone-label { font-size: 12px; font-weight: 600; color: var(--text-sub); }
+  .stat-milestone-remaining { font-size: 12px; color: #B8860B; font-weight: 700; }
+  .stat-milestone-track { height: 6px; background: rgba(255,194,0,0.15); border-radius: 99px; overflow: hidden; }
+  .stat-milestone-fill { height: 100%; background: #FFC200; border-radius: 99px; transition: width 0.5s ease; }
 
-  /* 分隔線 */
-  .stats-divider {
-    display: flex; align-items: center; gap: 10px;
-    margin: 4px 16px 12px; 
-  }
-  .stats-divider-line { flex: 1; height: 1px; background: #C8DCBF; }
-  .stats-divider-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.4px; }
+  .stat-7days-row { display: flex; justify-content: space-between; }
+  .stat-day-col { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+  .stat-day-dot { width: 26px; height: 26px; border-radius: 50%; background: rgba(46,173,92,0.1); transition: background 0.2s; }
+  .stat-day-dot.done { background: var(--primary); }
+  .stat-day-dot.today { box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px rgba(46,173,92,0.15); }
+  .stat-day-label { font-size: 10px; color: var(--text-sub); }
 
 
   /* ===== MANAGE PAGE ===== */
@@ -697,32 +680,8 @@
     <p>幾乎每天有做，就是好習慣 🌱</p>
   </div>
   <div class="scroll-area">
-
-    <!-- 選習慣 -->
-    <div class="stats-select-wrap">
-      <select class="habit-select" id="stats-select" onchange="renderHabitStats()">
-        <option value="">選擇習慣，查看趨勢...</option>
-      </select>
-    </div>
-
-    <!-- B: 柔性文案 -->
-    <div class="encourage-card" id="encourage-card">
-      <div class="encourage-text" id="encourage-text"></div>
-      <div class="encourage-sub" id="encourage-sub"></div>
-    </div>
-
-    <!-- C: 週熱度圓點 -->
-    <div class="week-dots-card" id="week-dots-card">
-      <div class="week-dots-title">最近 8 週完成率</div>
-      <div class="week-dots-row" id="week-dots-row"></div>
-    </div>
-
-    <!-- A: 完成率 -->
-    <div class="rate-card" id="rate-card">
-      <div class="rate-row" id="rate-row"></div>
-    </div>
-
-
+    <div id="stats-summary-row"></div>
+    <div id="stats-habits-list"></div>
   </div>
 </div>
 
@@ -1339,154 +1298,152 @@ function renderTodayCalendar() {
 }
 
 // ===== STATS PAGE =====
-let calYear, calMonth;
-
-function renderStatsPage() {
-  const select = document.getElementById('stats-select');
-  const current = select.value;
-  select.innerHTML = '<option value="">選擇習慣，查看趨勢...</option>';
-  data.habits.forEach(h => {
-    const opt = document.createElement('option');
-    opt.value = h.id; opt.textContent = h.name;
-    if (h.id === current) opt.selected = true;
-    select.appendChild(opt);
-  });
-
-  const now = new Date();
-  if (!calYear) calYear = now.getFullYear();
-  if (!calMonth) calMonth = now.getMonth();
-
-  renderHabitStats();
-  renderOverviewCalendar();
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// ── B + C + A ──
-function renderHabitStats() {
-  const hid = document.getElementById('stats-select').value;
-  const encourageCard = document.getElementById('encourage-card');
-  const weekCard = document.getElementById('week-dots-card');
-  const rateCard = document.getElementById('rate-card');
+function calcStreak(records) {
+  let streak = 0;
+  const d = new Date();
+  while (streak < 9999) {
+    if (records[localDateStr(d)]) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
 
-  if (!hid) {
-    encourageCard.classList.remove('show');
-    weekCard.classList.remove('show');
-    rateCard.classList.remove('show');
+function calcBestStreak(records) {
+  const dates = Object.keys(records).sort();
+  if (dates.length === 0) return 0;
+  let best = 1, current = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = new Date(dates[i-1] + 'T00:00:00');
+    const curr = new Date(dates[i] + 'T00:00:00');
+    const diff = Math.round((curr - prev) / 86400000);
+    if (diff === 1) { current++; if (current > best) best = current; }
+    else current = 1;
+  }
+  return best;
+}
+
+function nextMilestone(streak) {
+  const milestones = [3, 7, 14, 30, 60, 100];
+  return milestones.find(m => streak < m) || null;
+}
+
+function renderStatsPage() {
+  const todayStr = today();
+  const dayNames = ['日','一','二','三','四','五','六'];
+
+  // ── 全局摘要 ──
+  let totalCheckins = 0, globalBest = 0;
+  data.habits.forEach(h => {
+    totalCheckins += Object.keys(h.records || {}).length;
+    globalBest = Math.max(globalBest, calcBestStreak(h.records || {}));
+  });
+  const now = new Date();
+  const daysThisMonth = now.getDate();
+  let monthDone = 0;
+  for (let i = 0; i < daysThisMonth; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    if (data.habits.some(h => (h.records || {})[localDateStr(d)])) monthDone++;
+  }
+  const monthRate = Math.round(monthDone / daysThisMonth * 100);
+
+  document.getElementById('stats-summary-row').innerHTML = `
+    <div class="stats-summary-row">
+      <div class="stats-mini-card">
+        <div class="stats-mini-num">${totalCheckins}</div>
+        <div class="stats-mini-label">總打卡次數</div>
+      </div>
+      <div class="stats-mini-card">
+        <div class="stats-mini-num">${globalBest}</div>
+        <div class="stats-mini-label">歷史最長連續</div>
+      </div>
+      <div class="stats-mini-card">
+        <div class="stats-mini-num">${monthRate}%</div>
+        <div class="stats-mini-label">本月完成率</div>
+      </div>
+    </div>
+  `;
+
+  // ── 每個習慣的卡片 ──
+  const list = document.getElementById('stats-habits-list');
+  list.innerHTML = '';
+
+  if (data.habits.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div>還沒有習慣<br>去管理頁面新增吧！</div>`;
     return;
   }
 
-  const h = data.habits.find(x => x.id === hid);
-  if (!h) return;
-  encourageCard.classList.add('show');
-  weekCard.classList.add('show');
-  rateCard.classList.add('show');
+  data.habits.forEach(h => {
+    const records = h.records || {};
+    const todayDone = !!records[todayStr];
+    const streak = calcStreak(records);
+    const best = Math.max(calcBestStreak(records), streak);
+    const next = nextMilestone(streak);
 
-  const todayStr = today();
-
-  // ── 計算各種數據 ──
-  // 過去30天完成率
-  let done30 = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    if (h.records[d.toISOString().slice(0,10)]) done30++;
-  }
-  const rate30 = Math.round(done30 / 30 * 100);
-
-  // 本週完成率（週一到今天）
-  const now = new Date();
-  const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0=週一
-  let doneThisWeek = 0;
-  const daysThisWeek = dayOfWeek + 1;
-  for (let i = 0; i <= dayOfWeek; i++) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    if (h.records[d.toISOString().slice(0,10)]) doneThisWeek++;
-  }
-  const rateWeek = Math.round(doneThisWeek / daysThisWeek * 100);
-
-  // 最後幾天沒做
-  let missedDays = 0;
-  const checkD = new Date(todayStr);
-  while (true) {
-    const s = checkD.toISOString().slice(0,10);
-    if (!h.records[s]) { missedDays++; checkD.setDate(checkD.getDate()-1); }
-    else break;
-    if (missedDays > 60) break;
-  }
-
-  // ── B: 柔性文案 ──
-  let mainText = '', subText = '';
-  if (missedDays === 0) {
-    if (rate30 >= 85) {
-      mainText = `今天已經完成了，繼續保持 💪`;
-      subText = `過去30天完成率 ${rate30}%，幾乎每天都有做，這就是習慣的力量。`;
+    // 里程碑進度條
+    const milestones = [3, 7, 14, 30, 60, 100];
+    let milestoneHTML = '';
+    if (next !== null) {
+      const idx = milestones.indexOf(next);
+      const prev = idx === 0 ? 0 : milestones[idx - 1];
+      const pct = prev === next ? 100 : Math.round((streak - prev) / (next - prev) * 100);
+      const remaining = next - streak;
+      milestoneHTML = `
+        <div class="stat-milestone-wrap">
+          <div class="stat-milestone-header">
+            <span class="stat-milestone-label">下一里程碑：${next} 天</span>
+            <span class="stat-milestone-remaining">還差 ${remaining} 天</span>
+          </div>
+          <div class="stat-milestone-track">
+            <div class="stat-milestone-fill" style="width:${pct}%"></div>
+          </div>
+        </div>`;
     } else {
-      mainText = `今天完成了，做得好 🌱`;
-      subText = `過去30天完成率 ${rate30}%，有在進步。`;
+      milestoneHTML = `
+        <div class="stat-milestone-wrap">
+          <div class="stat-milestone-label" style="color:var(--primary);font-size:13px;">🏆 已達成所有里程碑！</div>
+        </div>`;
     }
-  } else if (missedDays === 1) {
-    mainText = `昨天沒做到，今天可以重新開始 😊`;
-    subText = rate30 >= 70
-      ? `過去30天完成率 ${rate30}%，偶爾休息一天沒關係。`
-      : `過去30天完成率 ${rate30}%，這週可以多試幾次。`;
-  } else if (missedDays <= 3) {
-    mainText = `這幾天比較忙嗎？隨時都能回來 🙌`;
-    subText = `過去30天完成率 ${rate30}%，你之前做得很不錯。`;
-  } else if (missedDays <= 7) {
-    mainText = `已經有 ${missedDays} 天沒做了，不過上個月的你做得很好 💛`;
-    subText = `過去30天完成率 ${rate30}%，重新開始比完美更重要。`;
-  } else {
-    mainText = `好一陣子沒做了，沒關係，今天就是重新開始的好時機 🌅`;
-    subText = `不用追回來，就從今天一步一步來。`;
-  }
-  document.getElementById('encourage-text').textContent = mainText;
-  document.getElementById('encourage-sub').textContent = subText;
 
-  // ── C: 週熱度圓點（最近8週）──
-  const dotsRow = document.getElementById('week-dots-row');
-  dotsRow.innerHTML = '';
-  for (let w = 7; w >= 0; w--) {
-    // 找該週的週一
-    const monday = new Date();
-    monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() === 0 ? -6 : 1) - w * 7);
-    let weekDone = 0, weekTotal = 0;
-    for (let d = 0; d < 7; d++) {
-      const day = new Date(monday);
-      day.setDate(monday.getDate() + d);
-      if (day > new Date()) continue; // 未來不算
-      weekTotal++;
-      if (h.records[day.toISOString().slice(0,10)]) weekDone++;
+    // 近7天點點
+    let dotsHTML = '';
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = localDateStr(d);
+      const done = !!records[ds];
+      const isToday = i === 0;
+      dotsHTML += `<div class="stat-day-col">
+        <div class="stat-day-dot ${done ? 'done' : ''} ${isToday ? 'today' : ''}"></div>
+        <div class="stat-day-label">${dayNames[d.getDay()]}</div>
+      </div>`;
     }
-    const pct = weekTotal > 0 ? Math.round(weekDone / weekTotal * 100) : 0;
-    const dotClass = pct >= 90 ? 'w100' : pct >= 70 ? 'w75' : pct >= 50 ? 'w50' : pct >= 20 ? 'w25' : 'w0';
-    const label = w === 0 ? '本週' : w === 1 ? '上週' : `${w}週前`;
 
-    const item = document.createElement('div');
-    item.className = 'week-dot-item';
-    item.innerHTML = `
-      <div class="week-dot-pct">${weekTotal > 0 ? pct + '%' : '-'}</div>
-      <div class="week-dot ${dotClass}"></div>
-      <div class="week-dot-label">${label}</div>
+    const card = document.createElement('div');
+    card.className = 'stat-habit-card' + (!todayDone ? ' today-pending' : '');
+    card.innerHTML = `
+      <div class="stat-habit-header">
+        <div class="stat-habit-name">${h.name}</div>
+        <div class="stat-today-badge ${todayDone ? 'done' : ''}">${todayDone ? '今天完成 ✓' : '今天還沒做'}</div>
+      </div>
+      <div class="stat-streak-row">
+        <div class="stat-streak-block">
+          <div class="stat-streak-num">${streak}</div>
+          <div class="stat-streak-label">🔥 連續天數</div>
+        </div>
+        <div class="stat-streak-divider"></div>
+        <div class="stat-streak-block">
+          <div class="stat-streak-num best">${best}</div>
+          <div class="stat-streak-label">🏆 最佳紀錄</div>
+        </div>
+      </div>
+      ${milestoneHTML}
+      <div class="stat-7days-row">${dotsHTML}</div>
     `;
-    dotsRow.appendChild(item);
-  }
-
-  // ── A: 完成率條 ──
-  const rateRow = document.getElementById('rate-row');
-  rateRow.innerHTML = `
-    <div>
-      <div class="rate-item-label">
-        <span class="rate-item-name">過去 30 天</span>
-        <span class="rate-item-pct">${rate30}%</span>
-      </div>
-      <div class="rate-bar"><div class="rate-fill" style="width:${rate30}%"></div></div>
-    </div>
-    <div>
-      <div class="rate-item-label">
-        <span class="rate-item-name">本週（${daysThisWeek}天中完成${doneThisWeek}天）</span>
-        <span class="rate-item-pct">${rateWeek}%</span>
-      </div>
-      <div class="rate-bar"><div class="rate-fill" style="width:${rateWeek}%"></div></div>
-    </div>
-  `;
+    list.appendChild(card);
+  });
 }
 
 
