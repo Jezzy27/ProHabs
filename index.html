@@ -115,8 +115,8 @@
   /* ===== TODAY PAGE ===== */
   .progress-bar-wrap { margin: 0 16px 12px; }
   .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; font-weight: 500; }
-  .progress-bar { height: 7px; background: #C8F0D8; border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.4s ease; }
+  .progress-bar { height: 7px; background: rgba(255,194,0,0.12); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #FFC200; border-radius: 99px; transition: width 0.4s ease, background-color 0.4s ease; }
 
   /* Chain group */
   .chain-group { margin: 0 16px 12px; }
@@ -1100,7 +1100,10 @@ function renderToday() {
   const total = habits.length;
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('progress-fill').style.width = pct + '%';
+  const fillEl = document.getElementById('progress-fill');
+  fillEl.style.width = pct + '%';
+  const opacity = pct === 0 ? 0 : 0.25 + (pct / 100) * 0.75;
+  fillEl.style.background = `rgba(255,194,0,${opacity.toFixed(2)})`;
 
   const list = document.getElementById('today-list');
   list.innerHTML = '';
