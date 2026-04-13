@@ -45,8 +45,89 @@
   }
   .header-text h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.8px; color: var(--text); }
   .header-text p { color: var(--text-sub); font-size: 13px; margin-top: 3px; font-weight: 400; }
-  .coin-display { display: flex; align-items: center; gap: 6px; background: #FFFBE8; border: 1.5px solid #F0D870; border-radius: 99px; padding: 6px 14px 6px 10px; }
+  .coin-display { display: flex; align-items: center; gap: 6px; background: #FFFBE8; border: 1.5px solid #F0D870; border-radius: 99px; padding: 6px 14px 6px 10px; cursor: pointer; }
   .coin-display span { font-size: 16px; font-weight: 700; color: #92680A; letter-spacing: -0.5px; }
+
+  /* 獎勵 Toast */
+  .reward-toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #1A1A1A; color: white; border-radius: 99px;
+    padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600; z-index: 9999;
+    opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25); white-space: nowrap;
+  }
+  .reward-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .reward-toast-amount { font-size: 16px; font-weight: 800; color: #FFC200; }
+  .reward-toast-reason { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+  /* 金幣 Modal */
+  .coin-modal-overlay {
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(0,0,0,0.45); display: flex; align-items: flex-end;
+    justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .coin-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .coin-modal {
+    background: #FAFAFA; border-radius: 28px 28px 0 0; width: 100%; max-width: 430px;
+    max-height: 88vh; overflow-y: auto; padding: 0 0 40px;
+    transform: translateY(40px); transition: transform 0.3s ease;
+  }
+  .coin-modal-overlay.open .coin-modal { transform: translateY(0); }
+  .coin-modal-handle { width: 36px; height: 4px; background: #DDD; border-radius: 2px; margin: 14px auto 0; }
+  .coin-modal-header { text-align: center; padding: 20px 24px 16px; border-bottom: 1px solid #F0EDE8; }
+  .coin-modal-balance { font-size: 48px; font-weight: 800; color: #92680A; letter-spacing: -2px; line-height: 1; }
+  .coin-modal-balance-label { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+  .coin-modal-section { padding: 18px 20px 4px; }
+  .coin-modal-section-title { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; }
+  .earn-rule-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: white; border-radius: 12px; margin-bottom: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .earn-rule-left { font-size: 13px; color: var(--text); flex: 1; }
+  .earn-rule-label { font-weight: 600; }
+  .earn-rule-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .earn-rule-amount { font-size: 14px; font-weight: 800; color: #92680A; white-space: nowrap; margin-left: 12px; }
+
+  /* 商店 */
+  .shop-item-card {
+    background: white; border-radius: 14px; padding: 14px 16px;
+    margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 2px solid transparent; transition: border-color 0.3s;
+  }
+  .shop-item-card.affordable { border-color: #FFC200; background: #FFFDF0; }
+  .shop-item-card.bought { opacity: 0.7; }
+  .shop-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .shop-item-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .shop-item-price { font-size: 14px; font-weight: 800; color: #92680A; white-space: nowrap; margin-left: 8px; }
+  .shop-item-badges { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .shop-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; }
+  .shop-badge.can-buy { background: #FFC200; color: #6B4A00; }
+  .shop-badge.bought-badge { background: rgba(46,173,92,0.15); color: var(--primary); }
+  .shop-item-progress { margin-top: 8px; }
+  .shop-item-progress-track { height: 4px; background: rgba(255,194,0,0.15); border-radius: 99px; overflow: hidden; }
+  .shop-item-progress-fill { height: 100%; background: #FFC200; border-radius: 99px; transition: width 0.4s; }
+  .shop-item-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .shop-btn { flex: 1; padding: 9px 0; border-radius: 99px; border: none; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .shop-btn.buy { background: #FFC200; color: #6B4A00; }
+  .shop-btn.delete { background: rgba(0,0,0,0.06); color: var(--text-sub); }
+  .add-shop-btn { width: 100%; padding: 14px; background: rgba(46,173,92,0.08); border: 2px dashed rgba(46,173,92,0.3); border-radius: 14px; color: var(--primary); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
+
+  /* 待領取通知 Modal */
+  .pending-modal-overlay {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .pending-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .pending-modal {
+    background: white; border-radius: 24px; padding: 28px 24px 24px;
+    width: calc(100% - 48px); max-width: 360px;
+    transform: scale(0.9); transition: transform 0.3s;
+  }
+  .pending-modal-overlay.open .pending-modal { transform: scale(1); }
+  .pending-modal-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 16px; text-align: center; }
+  .pending-notif-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #FFFBE8; border-radius: 12px; margin-bottom: 8px; }
+  .pending-notif-reason { font-size: 13px; color: var(--text); font-weight: 500; flex: 1; }
+  .pending-notif-amount { font-size: 16px; font-weight: 800; color: #92680A; margin-left: 12px; }
+  .pending-modal-close { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 99px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; }
 
   /* 金幣獎勵畫面 */
   .coin-reward-overlay {
@@ -639,7 +720,7 @@
 <div class="page active" id="page-today">
   <div class="header">
     <div class="header-text"><h1>ProHabs</h1></div>
-    <div class="coin-display" id="coin-display">
+    <div class="coin-display" id="coin-display" onclick="openCoinModal()">
       <img src="dollar.png" alt="coin" style="width:22px;height:22px;">
       <span id="coin-total">0</span>
     </div>
@@ -870,6 +951,70 @@
   </div>
 </div>
 
+<!-- 金幣 Modal -->
+<div class="coin-modal-overlay" id="coin-modal-overlay" onclick="closeCoinModal()">
+  <div class="coin-modal" onclick="event.stopPropagation()">
+    <div class="coin-modal-handle"></div>
+    <div class="coin-modal-header">
+      <div class="coin-modal-balance" id="coin-modal-balance">0</div>
+      <div class="coin-modal-balance-label">💰 累積元寶</div>
+    </div>
+
+    <div class="coin-modal-section">
+      <div class="coin-modal-section-title">賺幣方式</div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 元</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 元</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 元</div></div><div class="earn-rule-amount">1 元/分</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">連續里程碑</div><div class="earn-rule-sub">3天 +10｜7天 +30｜14天 +80<br>30天 +200｜60天 +500｜100天 +1000</div></div><div class="earn-rule-amount">各一次</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 元</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 元</div></div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500</div></div><div class="earn-rule-amount">每月</div></div>
+    </div>
+
+    <div class="coin-modal-section">
+      <div class="coin-modal-section-title">我的商店</div>
+      <div id="shop-items-list"></div>
+      <button class="add-shop-btn" onclick="openAddShopItem()">＋ 新增商品</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增商品 Modal -->
+<div class="modal-overlay" id="add-shop-modal">
+  <div class="modal">
+    <div class="modal-title">新增商品</div>
+    <div class="settings-label" style="margin-top:0">商品名稱</div>
+    <input class="settings-input" id="shop-item-name" placeholder="例：肌酸、新球鞋...">
+    <div class="settings-label">目標價格（元）</div>
+    <input class="settings-input" id="shop-item-price" type="number" placeholder="例：800">
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="settings-save" style="flex:1;background:rgba(0,0,0,0.07);color:var(--text);" onclick="closeModal('add-shop-modal')">取消</button>
+      <button class="settings-save" style="flex:1;" onclick="saveShopItem()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 購買確認 Modal -->
+<div class="modal-overlay" id="buy-confirm-modal">
+  <div class="modal">
+    <div class="modal-title">確認購買</div>
+    <div id="buy-confirm-text" style="font-size:15px;color:var(--text-sub);text-align:center;padding:8px 0 20px;line-height:1.7;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="settings-save" style="flex:1;background:rgba(0,0,0,0.07);color:var(--text);" onclick="closeModal('buy-confirm-modal')">取消</button>
+      <button class="settings-save" style="flex:1;background:#FFC200;color:#6B4A00;" id="buy-confirm-btn">購買！</button>
+    </div>
+  </div>
+</div>
+
+<!-- 待領取通知 Modal -->
+<div class="pending-modal-overlay" id="pending-modal-overlay">
+  <div class="pending-modal">
+    <div class="pending-modal-title">🎉 新的獎勵入帳！</div>
+    <div id="pending-notif-list"></div>
+    <button class="pending-modal-close" onclick="closePendingModal()">收下！</button>
+  </div>
+</div>
+
 <!-- 金幣獎勵畫面 -->
 <div class="coin-reward-overlay" id="coin-reward-overlay" onclick="closeCoinReward()">
   <div class="coin-reward-card" onclick="event.stopPropagation()">
@@ -976,6 +1121,12 @@ function loadData() {
     if (!d.chains) d.chains = [];
     if (!d.habits) d.habits = [];
     if (d.totalCoins == null) d.totalCoins = 0;
+    if (!d.pendingNotifs) d.pendingNotifs = [];
+    if (!d.claimedDailyBonus) d.claimedDailyBonus = {};
+    if (!d.claimedWeekBonus) d.claimedWeekBonus = {};
+    if (!d.claimedMilestones) d.claimedMilestones = {};
+    if (!d.lastSettledMonth) d.lastSettledMonth = '';
+    if (!d.shopItems) d.shopItems = [];
     return d;
   } catch { return getDefaultData(); }
 }
@@ -998,7 +1149,13 @@ function getDefaultData() {
       { id: 'morning', name: '早晨鏈' },
       { id: 'evening', name: '晚間鏈' },
     ],
-    totalCoins: 0
+    totalCoins: 0,
+    pendingNotifs: [],
+    claimedDailyBonus: {},
+    claimedWeekBonus: {},
+    claimedMilestones: {},
+    lastSettledMonth: '',
+    shopItems: []
   };
 }
 
@@ -1188,13 +1345,22 @@ function addRipple(card, e) {
 function toggleHabit(id, dateStr, chainId) {
   const h = data.habits.find(x => x.id === id);
   if (!h) return;
-  if (h.records[dateStr]) {
+  const wasChecked = !!h.records[dateStr];
+  if (wasChecked) {
     delete h.records[dateStr];
   } else {
     h.records[dateStr] = true;
   }
   saveData(data);
   renderToday();
+
+  // Rewards (only on check-in, not un-check)
+  if (!wasChecked) {
+    checkComebackBonus(id, dateStr);
+    checkStreakMilestone(id);
+    checkDailyBonus(dateStr);
+    checkPerfectWeek(dateStr);
+  }
 
   // Check chain complete
   if (chainId && h.records[dateStr]) {
@@ -2090,6 +2256,256 @@ function updateCoinDisplay() {
   document.getElementById('coin-total').textContent = (data.totalCoins || 0).toLocaleString();
 }
 
+// ===== REWARD SYSTEM =====
+function awardCoins(amount, reason) {
+  data.totalCoins = (data.totalCoins || 0) + amount;
+  saveData(data);
+  updateCoinDisplay();
+  showRewardToast(amount, reason);
+}
+
+function showRewardToast(amount, reason) {
+  const toast = document.createElement('div');
+  toast.className = 'reward-toast';
+  toast.innerHTML = `<span style="font-size:20px;">🪙</span><div><div class="reward-toast-amount">+${amount} 元</div><div class="reward-toast-reason">${reason}</div></div>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3200);
+}
+
+function checkDailyBonus(dateStr) {
+  if (data.claimedDailyBonus[dateStr]) return;
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  const scheduled = data.habits.filter(h => {
+    const days = h.days || [0,1,2,3,4,5,6];
+    if (!days.includes(dow)) return false;
+    if (h.endDate && h.endDate < dateStr) return false;
+    if (h.paused && (!h.resumeDate || h.resumeDate > dateStr)) return false;
+    return true;
+  });
+  if (scheduled.length === 0) return;
+  const done = scheduled.filter(h => h.records[dateStr]).length;
+  const pct = done / scheduled.length;
+  if (pct === 1) {
+    data.claimedDailyBonus[dateStr] = 'full';
+    saveData(data);
+    setTimeout(() => awardCoins(50, '今日全部完成 🎉'), 400);
+  } else if (pct >= 0.8) {
+    data.claimedDailyBonus[dateStr] = 'partial';
+    saveData(data);
+    setTimeout(() => awardCoins(20, `今日完成 ${Math.round(pct*100)}% ✅`), 400);
+  }
+}
+
+function checkStreakMilestone(habitId) {
+  const h = data.habits.find(x => x.id === habitId);
+  if (!h) return;
+  const streak = calcStreak(h.records || {});
+  if (streak === 0) return;
+  const startD = new Date();
+  startD.setDate(startD.getDate() - (streak - 1));
+  const streakStart = localDateStr(startD);
+  const milestones = { 3: 10, 7: 30, 14: 80, 30: 200, 60: 500, 100: 1000 };
+  if (!data.claimedMilestones[habitId]) data.claimedMilestones[habitId] = {};
+  let delay = 800;
+  for (const [m, reward] of Object.entries(milestones)) {
+    if (streak >= parseInt(m)) {
+      if (data.claimedMilestones[habitId][m] !== streakStart) {
+        data.claimedMilestones[habitId][m] = streakStart;
+        saveData(data);
+        const d = delay;
+        setTimeout(() => awardCoins(reward, `${h.name} 連續 ${m} 天 🔥`), d);
+        delay += 600;
+      }
+    }
+  }
+}
+
+function checkComebackBonus(habitId, dateStr) {
+  const h = data.habits.find(x => x.id === habitId);
+  if (!h) return;
+  let missed = 0;
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  while (missed < 100) {
+    if (!(h.records || {})[localDateStr(d)]) { missed++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  if (missed >= 3) {
+    const hasHistory = Object.keys(h.records || {}).some(k => k < dateStr);
+    if (hasHistory) setTimeout(() => awardCoins(15, `${h.name} 重新回來 💪`), 200);
+  }
+}
+
+function checkPerfectWeek(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const todayD = new Date(today() + 'T00:00:00');
+  if (sunday > todayD) return;
+  const weekKey = localDateStr(monday);
+  if (data.claimedWeekBonus[weekKey]) return;
+  for (let i = 0; i < 7; i++) {
+    const dayD = new Date(monday); dayD.setDate(monday.getDate() + i);
+    const ds = localDateStr(dayD);
+    const dayDow = dayD.getDay();
+    const scheduled = data.habits.filter(h => {
+      const days = h.days || [0,1,2,3,4,5,6];
+      return days.includes(dayDow) && !(h.endDate && h.endDate < ds) && !(h.paused && (!h.resumeDate || h.resumeDate > ds));
+    });
+    if (scheduled.length === 0) continue;
+    if (!scheduled.every(h => h.records[ds])) return;
+  }
+  data.claimedWeekBonus[weekKey] = true;
+  saveData(data);
+  setTimeout(() => awardCoins(150, '完美一週 ✨'), 1200);
+}
+
+function checkMonthlySettlement() {
+  const now = new Date();
+  const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonth = `${prevD.getFullYear()}-${String(prevD.getMonth()+1).padStart(2,'0')}`;
+  if (data.lastSettledMonth === prevMonth) return;
+  const daysInMonth = new Date(prevD.getFullYear(), prevD.getMonth() + 1, 0).getDate();
+  let totalDone = 0, totalPossible = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${prevMonth}-${String(day).padStart(2,'0')}`;
+    const dayDow = new Date(ds + 'T00:00:00').getDay();
+    data.habits.forEach(h => {
+      const createdAt = h.nameHistory?.[0]?.changedAt;
+      if (createdAt && createdAt > ds) return;
+      const days = h.days || [0,1,2,3,4,5,6];
+      if (!days.includes(dayDow)) return;
+      totalPossible++;
+      if (h.records[ds]) totalDone++;
+    });
+  }
+  data.lastSettledMonth = prevMonth;
+  if (totalPossible > 0) {
+    const rate = Math.round(totalDone / totalPossible * 100);
+    let reward = 0, label = '';
+    if (rate >= 95) { reward = 500; label = `${prevD.getMonth()+1}月完成率 ${rate}%，完美月份 💎`; }
+    else if (rate >= 80) { reward = 250; label = `${prevD.getMonth()+1}月完成率 ${rate}%，非常優秀 🌟`; }
+    else if (rate >= 60) { reward = 100; label = `${prevD.getMonth()+1}月完成率 ${rate}%，繼續加油 ✅`; }
+    if (reward > 0) {
+      data.totalCoins = (data.totalCoins || 0) + reward;
+      data.pendingNotifs.push({ reason: label, amount: reward, date: today() });
+    }
+  }
+  saveData(data);
+}
+
+function checkPendingNotifs() {
+  if (!data.pendingNotifs || data.pendingNotifs.length === 0) return;
+  const notifs = [...data.pendingNotifs];
+  data.pendingNotifs = [];
+  saveData(data);
+  updateCoinDisplay();
+  const list = document.getElementById('pending-notif-list');
+  list.innerHTML = notifs.map(n => `
+    <div class="pending-notif-item">
+      <div class="pending-notif-reason">${n.reason}</div>
+      <div class="pending-notif-amount">+${n.amount} 元</div>
+    </div>`).join('');
+  document.getElementById('pending-modal-overlay').classList.add('open');
+}
+
+function closePendingModal() {
+  document.getElementById('pending-modal-overlay').classList.remove('open');
+}
+
+// ===== COIN MODAL =====
+function openCoinModal() {
+  document.getElementById('coin-modal-balance').textContent = (data.totalCoins || 0).toLocaleString();
+  renderShop();
+  document.getElementById('coin-modal-overlay').classList.add('open');
+}
+
+function closeCoinModal() {
+  document.getElementById('coin-modal-overlay').classList.remove('open');
+}
+
+// ===== SHOP =====
+function renderShop() {
+  const coins = data.totalCoins || 0;
+  const list = document.getElementById('shop-items-list');
+  if (!data.shopItems || data.shopItems.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-sub);font-size:13px;padding:12px 0 8px;">還沒有商品，新增你想買的東西吧！</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  data.shopItems.forEach(item => {
+    const affordable = !item.bought && coins >= item.price;
+    const pct = item.bought ? 100 : Math.min(100, Math.round(coins / item.price * 100));
+    const card = document.createElement('div');
+    card.className = 'shop-item-card' + (affordable ? ' affordable' : '') + (item.bought ? ' bought' : '');
+    card.innerHTML = `
+      <div class="shop-item-top">
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-price">🪙 ${item.price.toLocaleString()} 元</div>
+      </div>
+      <div class="shop-item-badges">
+        ${item.bought ? '<span class="shop-badge bought-badge">已購買 ✓</span>' : ''}
+        ${affordable ? '<span class="shop-badge can-buy">可以買了！</span>' : ''}
+        ${!item.bought ? `<span style="font-size:11px;color:var(--text-sub);">已存 ${Math.min(coins,item.price).toLocaleString()} / ${item.price.toLocaleString()}</span>` : ''}
+      </div>
+      ${!item.bought ? `<div class="shop-item-progress"><div class="shop-item-progress-track"><div class="shop-item-progress-fill" style="width:${pct}%"></div></div></div>` : ''}
+      <div class="shop-item-actions">
+        ${!item.bought && affordable ? `<button class="shop-btn buy" onclick="confirmBuy('${item.id}')">購買</button>` : ''}
+        <button class="shop-btn delete" onclick="deleteShopItem('${item.id}')">${item.bought ? '刪除' : '移除'}</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function openAddShopItem() {
+  document.getElementById('shop-item-name').value = '';
+  document.getElementById('shop-item-price').value = '';
+  openModal('add-shop-modal');
+}
+
+function saveShopItem() {
+  const name = document.getElementById('shop-item-name').value.trim();
+  const price = parseInt(document.getElementById('shop-item-price').value);
+  if (!name || !price || price <= 0) { showToast('請填寫名稱和價格'); return; }
+  data.shopItems.push({ id: 'shop_' + Date.now(), name, price, bought: false });
+  saveData(data);
+  closeModal('add-shop-modal');
+  renderShop();
+}
+
+function confirmBuy(itemId) {
+  const item = data.shopItems.find(x => x.id === itemId);
+  if (!item) return;
+  document.getElementById('buy-confirm-text').textContent = `購買「${item.name}」需要 ${item.price.toLocaleString()} 元，購買後將從餘額中扣除。`;
+  document.getElementById('buy-confirm-btn').onclick = () => executeBuy(itemId);
+  openModal('buy-confirm-modal');
+}
+
+function executeBuy(itemId) {
+  const item = data.shopItems.find(x => x.id === itemId);
+  if (!item || item.bought) return;
+  if ((data.totalCoins || 0) < item.price) { showToast('元寶不足！'); return; }
+  item.bought = true;
+  data.totalCoins -= item.price;
+  saveData(data);
+  updateCoinDisplay();
+  closeModal('buy-confirm-modal');
+  document.getElementById('coin-modal-balance').textContent = (data.totalCoins || 0).toLocaleString();
+  renderShop();
+  showToast(`🎉 成功購買「${item.name}」！`);
+}
+
+function deleteShopItem(itemId) {
+  data.shopItems = data.shopItems.filter(x => x.id !== itemId);
+  saveData(data);
+  renderShop();
+}
+
 function cancelTimer() {
   clearInterval(timerInterval);
   timerRunning = false;
@@ -2119,6 +2535,8 @@ document.getElementById('new-habit-name').addEventListener('keydown', e => { if 
 document.getElementById('settings-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHabitSettings(); });
 
 // Init
+checkMonthlySettlement();
+checkPendingNotifs();
 renderToday();
 </script>
 </body>
