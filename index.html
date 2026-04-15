@@ -410,14 +410,19 @@
   /* ===== MANAGE PAGE ===== */
   .manage-list { margin: 0 16px; }
 
-  /* 拖曳配對視覺（管理頁） */
-  .manage-item.pair-preview {
-    border-color: #FFC200 !important;
-    box-shadow: 0 0 0 3px rgba(255,194,0,0.45) !important;
-    transform: scale(1.02);
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  /* 長按配對視覺（管理頁） */
+  .manage-item.pair-selected {
+    border: 2px solid #FFC200 !important;
+    box-shadow: 0 0 0 3px rgba(255,194,0,0.3) !important;
+    background: #FFFDF0 !important;
+    transition: all 0.2s;
   }
-  .manage-item.drag-source { opacity: 0.45; transform: scale(0.97); transition: all 0.15s; }
+  #pair-select-hint {
+    margin: 0 16px 10px; padding: 10px 14px;
+    background: rgba(255,194,0,0.12); border: 1.5px solid rgba(255,194,0,0.4);
+    border-radius: 12px; font-size: 13px; color: #92680A;
+    text-align: center; font-weight: 500;
+  }
   .pair-tag {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 10px; padding: 2px 7px; border-radius: 99px;
@@ -855,6 +860,7 @@
     <div class="header-text"><h1>管理習慣</h1><p>新增、改名、設定堆疊鏈條</p></div>
   </div>
   <div class="scroll-area">
+    <div id="pair-select-hint" style="display:none;"></div>
     <div class="manage-list" id="manage-list"></div>
 
   </div>
@@ -1952,79 +1958,59 @@ function makeManageItem(h) {
 
 
 
-// ===== MANAGE PAGE DRAG-TO-PAIR =====
-let manageDrag = null;
+// ===== MANAGE PAGE LONG-PRESS-TO-PAIR =====
+let pairSelectId = null;
+let pairLongPressTimer = null;
 
 function initManagePairDrag() {
   document.querySelectorAll('#manage-list .manage-item').forEach(item => {
-    item.addEventListener('touchstart', onManageTouchStart, { passive: true });
-    item.addEventListener('touchmove', onManageTouchMove, { passive: false });
-    item.addEventListener('touchend', onManageTouchEnd, { passive: true });
+    const id = item.dataset.habitId;
+    if (!id) return;
+    item.addEventListener('touchstart', e => {
+      if (e.target.closest('.drag-handle') || e.target.closest('.manage-btns')) return;
+      const startX = e.touches[0].clientX;
+      const startY = e.touches[0].clientY;
+      clearTimeout(pairLongPressTimer);
+      const cancelOnMove = me => {
+        const dx = me.touches[0].clientX - startX;
+        const dy = me.touches[0].clientY - startY;
+        if (Math.sqrt(dx*dx + dy*dy) > 8) {
+          clearTimeout(pairLongPressTimer);
+          item.removeEventListener('touchmove', cancelOnMove);
+        }
+      };
+      item.addEventListener('touchmove', cancelOnMove, { passive: true });
+      pairLongPressTimer = setTimeout(() => {
+        item.removeEventListener('touchmove', cancelOnMove);
+        onPairLongPress(id, item);
+      }, 450);
+    }, { passive: true });
   });
 }
 
-function onManageTouchStart(e) {
-  // Ignore if touch started on drag-handle (that's for reordering)
-  if (e.target.closest('.drag-handle')) return;
-  const el = e.currentTarget;
-  const id = el.dataset.habitId;
-  if (!id) return;
-  const t = e.touches[0];
-  manageDrag = {
-    id, el,
-    startX: t.clientX, startY: t.clientY,
-    moved: false,
-    hoverTarget: null,
-    hoverTimer: null,
-  };
-}
-
-function onManageTouchMove(e) {
-  if (!manageDrag) return;
-  const t = e.touches[0];
-  const dx = t.clientX - manageDrag.startX;
-  const dy = t.clientY - manageDrag.startY;
-  if (Math.sqrt(dx * dx + dy * dy) < 12) return;
-
-  if (!manageDrag.moved) {
-    manageDrag.moved = true;
-    manageDrag.el.classList.add('drag-source');
-  }
-  e.preventDefault();
-
-  // Find manage-item under finger
-  manageDrag.el.style.visibility = 'hidden';
-  const under = document.elementFromPoint(t.clientX, t.clientY);
-  manageDrag.el.style.visibility = '';
-  const targetItem = under?.closest('.manage-item');
-  const targetId = targetItem?.dataset.habitId;
-
-  if (targetId && targetId !== manageDrag.id) {
-    if (manageDrag.hoverTarget !== targetItem) {
-      clearTimeout(manageDrag.hoverTimer);
-      if (manageDrag.hoverTarget) manageDrag.hoverTarget.classList.remove('pair-preview');
-      manageDrag.hoverTarget = targetItem;
-      targetItem.classList.add('pair-preview');
-      manageDrag.hoverTimer = setTimeout(() => {
-        executePair(manageDrag.id, targetId);
-      }, 600);
-    }
+function onPairLongPress(id, item) {
+  if (pairSelectId && pairSelectId !== id) {
+    // Second long-press → pair
+    executePair(pairSelectId, id);
+    clearPairSelect();
+  } else if (pairSelectId === id) {
+    // Same card → cancel
+    clearPairSelect();
   } else {
-    clearTimeout(manageDrag.hoverTimer);
-    manageDrag.hoverTimer = null;
-    if (manageDrag.hoverTarget) {
-      manageDrag.hoverTarget.classList.remove('pair-preview');
-      manageDrag.hoverTarget = null;
-    }
+    // First long-press → select
+    pairSelectId = id;
+    document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
+    item.classList.add('pair-selected');
+    const hint = document.getElementById('pair-select-hint');
+    if (hint) { hint.textContent = '⚡ 再長按另一個習慣來配對，或再按同一個取消'; hint.style.display = 'block'; }
   }
 }
 
-function onManageTouchEnd() {
-  if (!manageDrag) return;
-  clearTimeout(manageDrag.hoverTimer);
-  if (manageDrag.hoverTarget) manageDrag.hoverTarget.classList.remove('pair-preview');
-  manageDrag.el.classList.remove('drag-source');
-  manageDrag = null;
+function clearPairSelect() {
+  pairSelectId = null;
+  document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
+  const hint = document.getElementById('pair-select-hint');
+  if (hint) hint.style.display = 'none';
 }
 
 // executePair now re-renders manage page
@@ -2037,7 +2023,6 @@ function executePair(idA, idB) {
   a.pairedWith = b.id;
   b.pairedWith = a.id;
   saveData(data);
-  manageDrag = null;
   renderManage();
   showToast(`⚡ 已配對：${a.name} + ${b.name}`);
 }
@@ -2067,29 +2052,10 @@ function onDragStart(e) {
   e.preventDefault();
   const item = e.currentTarget.closest('.manage-item');
   if (!item) return;
-
   const habitId = item.dataset.habitId;
-  const rect = item.getBoundingClientRect();
   const touch = e.touches[0];
-
-  // Create ghost
-  const ghost = document.createElement('div');
-  ghost.className = 'drag-ghost';
-  ghost.textContent = data.habits.find(h => h.id === habitId)?.name || '';
-  ghost.style.width = rect.width + 'px';
-  ghost.style.top = (touch.clientY - 24) + 'px';
-  ghost.style.left = rect.left + 'px';
-  document.body.appendChild(ghost);
-
-  // Create placeholder
-  const placeholder = document.createElement('div');
-  placeholder.className = 'manage-item drag-placeholder';
-  placeholder.style.height = rect.height + 'px';
-  item.parentNode.insertBefore(placeholder, item);
-  item.classList.add('dragging');
-
-  dragState = { habitId, item, ghost, placeholder, startY: touch.clientY };
-
+  // Don't create ghost/placeholder yet — wait for real finger movement
+  dragState = { habitId, item, ghost: null, placeholder: null, startX: touch.clientX, startY: touch.clientY, activated: false };
   document.addEventListener('touchmove', onDragMove, { passive: false });
   document.addEventListener('touchend', onDragEnd);
 }
@@ -2098,12 +2064,34 @@ function onDragMove(e) {
   if (!dragState) return;
   e.preventDefault();
   const touch = e.touches[0];
-  const { ghost, placeholder } = dragState;
 
-  // Move ghost
+  if (!dragState.activated) {
+    const dx = touch.clientX - dragState.startX;
+    const dy = touch.clientY - dragState.startY;
+    if (Math.sqrt(dx*dx + dy*dy) < 10) return;
+    // Enough movement — now create ghost and placeholder
+    const { item, habitId } = dragState;
+    const rect = item.getBoundingClientRect();
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.textContent = data.habits.find(h => h.id === habitId)?.name || '';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.top = (touch.clientY - 24) + 'px';
+    ghost.style.left = rect.left + 'px';
+    document.body.appendChild(ghost);
+    const placeholder = document.createElement('div');
+    placeholder.className = 'manage-item drag-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    item.parentNode.insertBefore(placeholder, item);
+    item.classList.add('dragging');
+    dragState.ghost = ghost;
+    dragState.placeholder = placeholder;
+    dragState.activated = true;
+  }
+
+  const { ghost, placeholder } = dragState;
   ghost.style.top = (touch.clientY - 24) + 'px';
 
-  // Find what element we're hovering over
   ghost.style.display = 'none';
   placeholder.style.display = 'none';
   const elBelow = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -2111,11 +2099,8 @@ function onDragMove(e) {
   placeholder.style.display = '';
 
   if (!elBelow) return;
-
-  // Find nearest manage-item or chain-inner-list
   const targetItem = elBelow.closest('.manage-item:not(.dragging):not(.drag-placeholder)');
   const targetList = elBelow.closest('.chain-inner-list');
-
   if (targetItem) {
     const targetRect = targetItem.getBoundingClientRect();
     const midpoint = targetRect.top + targetRect.height / 2;
@@ -2131,6 +2116,9 @@ function onDragMove(e) {
 
 function onDragEnd(e) {
   if (!dragState) return;
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend', onDragEnd);
+  if (!dragState.activated) { dragState = null; return; }
   const { habitId, item, ghost, placeholder } = dragState;
 
   // Insert item where placeholder is
