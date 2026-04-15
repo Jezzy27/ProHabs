@@ -1998,15 +1998,20 @@ function initManagePairDrag() {
     // Tap → second selection (only when pair mode is active)
     item.addEventListener('click', e => {
       if (!pairSelectId) return;
+      if (pairJustSelected) return; // ignore the click that fires right after long press
       if (e.target.closest('.manage-btns')) return;
       onPairTap(id);
     });
   });
 }
 
+let pairJustSelected = false;
+
 function onPairLongPress(id, item) {
-  if (pairSelectId) return; // already in pair mode, ignore long press
+  if (pairSelectId) return;
   pairSelectId = id;
+  pairJustSelected = true;
+  setTimeout(() => { pairJustSelected = false; }, 400);
   document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
   item.classList.add('pair-selected');
   const hint = document.getElementById('pair-select-hint');
@@ -2226,7 +2231,7 @@ let settingsDays = [0,1,2,3,4,5,6];
 let settingsColor = 'green';
 
 function openHabitSettings(id) {
-  if (pairSelectId) { onPairTap(id); return; }
+  if (pairSelectId) { if (!pairJustSelected) onPairTap(id); return; }
   settingsHabitId = id;
   const h = data.habits.find(x => x.id === id);
   document.getElementById('settings-name').value = h.name;
