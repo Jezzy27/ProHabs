@@ -497,7 +497,7 @@
     user-select: none; -webkit-user-select: none;
     transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
     position: relative;
-    touch-action: none;
+    touch-action: pan-y;
   }
   .manage-item.dragging {
     opacity: 0.4; transform: scale(0.98);
@@ -1977,6 +1977,7 @@ function initManagePairDrag() {
     // Long press → enter pair mode (first selection)
     item.addEventListener('touchstart', e => {
       if (e.target.closest('.drag-handle') || e.target.closest('.manage-btns')) return;
+      pairLongPressFired = false; // reset for each new touch sequence
       const startX = e.touches[0].clientX;
       const startY = e.touches[0].clientY;
       clearTimeout(pairLongPressTimer);
@@ -1998,20 +1999,19 @@ function initManagePairDrag() {
     // Tap → second selection (only when pair mode is active)
     item.addEventListener('click', e => {
       if (!pairSelectId) return;
-      if (pairJustSelected) return; // ignore the click that fires right after long press
+      if (pairLongPressFired) return; // ignore the click from the same touch that triggered long press
       if (e.target.closest('.manage-btns')) return;
       onPairTap(id);
     });
   });
 }
 
-let pairJustSelected = false;
+let pairLongPressFired = false; // true from long-press fire until next touchstart
 
 function onPairLongPress(id, item) {
   if (pairSelectId) return;
   pairSelectId = id;
-  pairJustSelected = true;
-  setTimeout(() => { pairJustSelected = false; }, 400);
+  pairLongPressFired = true; // mark: next click belongs to this touch, ignore it
   document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
   item.classList.add('pair-selected');
   const hint = document.getElementById('pair-select-hint');
@@ -2029,6 +2029,7 @@ function onPairTap(id) {
 }
 
 function clearPairSelect() {
+  clearTimeout(pairLongPressTimer); // cancel any pending long-press timer (fixes ghost reappear)
   pairSelectId = null;
   document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
   const hint = document.getElementById('pair-select-hint');
@@ -2231,7 +2232,7 @@ let settingsDays = [0,1,2,3,4,5,6];
 let settingsColor = 'green';
 
 function openHabitSettings(id) {
-  if (pairSelectId) { if (!pairJustSelected) onPairTap(id); return; }
+  if (pairSelectId) { if (!pairLongPressFired) onPairTap(id); return; }
   settingsHabitId = id;
   const h = data.habits.find(x => x.id === id);
   document.getElementById('settings-name').value = h.name;
