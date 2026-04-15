@@ -107,6 +107,7 @@
   .shop-item-actions { display: flex; gap: 8px; margin-top: 10px; }
   .shop-btn { flex: 1; padding: 9px 0; border-radius: 99px; border: none; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .shop-btn.buy { background: #FFC200; color: #6B4A00; }
+  .shop-btn.edit { background: rgba(46,173,92,0.1); color: var(--primary); }
   .shop-btn.delete { background: rgba(0,0,0,0.06); color: var(--text-sub); }
   .add-shop-btn { width: 100%; padding: 14px; background: rgba(46,173,92,0.08); border: 2px dashed rgba(46,173,92,0.3); border-radius: 14px; color: var(--primary); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
 
@@ -2901,6 +2902,16 @@ function closeCoinModal() {
   document.getElementById('coin-modal-overlay').classList.remove('open');
 }
 
+function initCoinModalSwipe() {
+  const modal = document.querySelector('#coin-modal-overlay .coin-modal');
+  let startY = 0;
+  modal.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  modal.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - startY;
+    if (modal.scrollTop === 0 && dy > 80) closeCoinModal();
+  }, { passive: true });
+}
+
 // ===== SHOP =====
 function renderShop() {
   const coins = data.totalCoins || 0;
@@ -2930,6 +2941,7 @@ function renderShop() {
         <div class="shop-item-progress"><div class="shop-item-progress-track"><div class="shop-item-progress-fill" style="width:${pct}%"></div></div></div>
         <div class="shop-item-actions">
           <button class="shop-btn buy" onclick="confirmBuy('${item.id}')" ${affordable ? '' : 'style="opacity:0.45;"'}>購買</button>
+          <button class="shop-btn edit" onclick="openEditShopItem('${item.id}')">編輯</button>
           <button class="shop-btn delete" onclick="deleteShopItem('${item.id}')">移除</button>
         </div>
       `;
@@ -2963,9 +2975,27 @@ function renderShop() {
   }
 }
 
+let editingShopItemId = null;
+
 function openAddShopItem() {
+  editingShopItemId = null;
   document.getElementById('shop-item-name').value = '';
   document.getElementById('shop-item-price').value = '';
+  document.querySelector('#add-shop-modal .add-shop-title').textContent = '新增商品';
+  document.querySelector('#add-shop-modal .add-shop-confirm').textContent = '新增';
+  closeCoinModal();
+  document.getElementById('add-shop-modal').classList.add('open');
+  setTimeout(() => document.getElementById('shop-item-name').focus(), 350);
+}
+
+function openEditShopItem(itemId) {
+  const item = (data.shopItems || []).find(x => x.id === itemId);
+  if (!item) return;
+  editingShopItemId = itemId;
+  document.getElementById('shop-item-name').value = item.name;
+  document.getElementById('shop-item-price').value = item.price;
+  document.querySelector('#add-shop-modal .add-shop-title').textContent = '編輯商品';
+  document.querySelector('#add-shop-modal .add-shop-confirm').textContent = '儲存';
   closeCoinModal();
   document.getElementById('add-shop-modal').classList.add('open');
   setTimeout(() => document.getElementById('shop-item-name').focus(), 350);
@@ -2980,10 +3010,18 @@ function saveShopItem() {
   const name = document.getElementById('shop-item-name').value.trim();
   const price = parseInt(document.getElementById('shop-item-price').value);
   if (!name || !price || price <= 0) { showToast('請填寫名稱和價格'); return; }
-  data.shopItems.push({ id: 'shop_' + Date.now(), name, price, bought: false });
+  const isEdit = !!editingShopItemId;
+  if (isEdit) {
+    const item = (data.shopItems || []).find(x => x.id === editingShopItemId);
+    if (item) { item.name = name; item.price = price; }
+  } else {
+    data.shopItems.push({ id: 'shop_' + Date.now(), name, price, bought: false });
+  }
+  editingShopItemId = null;
   saveData(data);
   document.getElementById('add-shop-modal').classList.remove('open');
   openCoinModal();
+  showToast(isEdit ? `✏️ 已更新「${name}」` : `✨ 已新增「${name}」`);
 }
 
 function confirmBuy(itemId) {
@@ -3051,6 +3089,7 @@ document.getElementById('settings-name').addEventListener('keydown', e => { if (
 checkMonthlySettlement();
 checkPendingNotifs();
 renderToday();
+initCoinModalSwipe();
 </script>
 
 <!-- Checklist 執行 Modal -->
