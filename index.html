@@ -418,10 +418,13 @@
     transition: all 0.2s;
   }
   #pair-select-hint {
-    margin: 0 16px 10px; padding: 10px 14px;
-    background: rgba(255,194,0,0.12); border: 1.5px solid rgba(255,194,0,0.4);
-    border-radius: 12px; font-size: 13px; color: #92680A;
-    text-align: center; font-weight: 500;
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 999; white-space: nowrap;
+    padding: 10px 18px;
+    background: rgba(255,248,210,0.97); border: 1.5px solid rgba(255,194,0,0.5);
+    border-radius: 99px; font-size: 13px; color: #92680A;
+    text-align: center; font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
   .pair-tag {
     display: inline-flex; align-items: center; gap: 3px;
@@ -491,6 +494,7 @@
     box-shadow: var(--shadow); padding: 16px 4px 16px 16px;
     margin-bottom: 10px;
     display: flex; align-items: flex-start; gap: 0;
+    user-select: none; -webkit-user-select: none;
     transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
     position: relative;
     touch-action: none;
