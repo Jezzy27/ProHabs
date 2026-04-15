@@ -796,6 +796,59 @@
     white-space: nowrap;
   }
   .backup-toast.show { opacity: 1; }
+
+  /* ===== CHECKLIST HABIT ===== */
+  #habit-settings-modal .modal { max-height: 85vh; overflow-y: auto; }
+
+  /* Type toggle in add modal */
+  .add-type-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .add-type-btn { flex: 1; padding: 10px 4px; border-radius: var(--radius-btn); border: 1.5px solid var(--primary-light); background: transparent; color: var(--text-sub); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .add-type-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* Checklist items editor in settings */
+  .cl-items-list { margin: 8px 0; }
+  .cl-item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .cl-item-label { flex: 1; font-size: 14px; color: var(--text); background: white; padding: 10px 12px; border-radius: 10px; line-height: 1.4; word-break: break-all; }
+  .cl-item-del-btn { width: 30px; height: 30px; border-radius: 50%; border: none; background: #FFE5E5; color: #C62828; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .cl-add-row { display: flex; gap: 8px; align-items: center; }
+  .cl-add-input { flex: 1; }
+  .cl-add-confirm-btn { padding: 11px 16px; background: var(--primary); color: white; border: none; border-radius: var(--radius-btn); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+  /* Checklist execution modal */
+  .cl-exec-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .cl-exec-overlay.open { opacity: 1; pointer-events: all; }
+  .cl-exec-modal {
+    background: white; width: 100%; max-width: 430px;
+    border-radius: 28px 28px 0 0; padding: 28px 24px 44px;
+    max-height: 85vh; overflow-y: auto;
+    transform: translateY(40px);
+    transition: transform 0.28s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .cl-exec-overlay.open .cl-exec-modal { transform: translateY(0); }
+  .cl-exec-header { margin-bottom: 20px; }
+  .cl-exec-title { font-size: 20px; font-weight: 800; color: var(--text); }
+  .cl-exec-progress { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+  .cl-exec-item { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--primary-light); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .cl-exec-item:last-of-type { border-bottom: none; }
+  .cl-exec-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #C0DCC0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); margin-top: 1px; }
+  .cl-exec-check.checked { background: var(--primary); border-color: var(--primary); }
+  .cl-exec-check svg { opacity: 0; transform: scale(0); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+  .cl-exec-check.checked svg { opacity: 1; transform: scale(1); }
+  .cl-exec-text { font-size: 15px; color: var(--text); line-height: 1.5; flex: 1; transition: color 0.2s; }
+  .cl-exec-text.checked { text-decoration: line-through; color: var(--text-sub); }
+  .cl-exec-actions { margin-top: 24px; display: flex; gap: 10px; }
+  .cl-exec-cancel-btn { padding: 14px 0; flex: 0 0 72px; background: transparent; color: var(--text-sub); border: 1.5px solid #D9E9D9; border-radius: var(--radius-btn); font-size: 15px; font-family: inherit; cursor: pointer; }
+  .cl-exec-done-btn { flex: 1; padding: 14px; background: #C8F0D8; color: #7AAF8A; border: none; border-radius: var(--radius-btn); font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
+  .cl-exec-done-btn.ready { background: var(--primary); color: white; }
+
+  /* Checklist badge on habit card */
+  .cl-habit-badge { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 99px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
+  /* Checklist badge on manage list */
+  .cl-manage-badge { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 99px; font-weight: 600; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -889,6 +942,10 @@
     </div>
     <!-- 新增習慣 -->
     <div id="add-panel-habit">
+      <div class="add-type-row">
+        <button class="add-type-btn active" id="add-type-normal" onclick="selectHabitType('normal')">一般習慣</button>
+        <button class="add-type-btn" id="add-type-checklist" onclick="selectHabitType('checklist')">☑ 清單習慣</button>
+      </div>
       <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%;">
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
@@ -1172,6 +1229,16 @@
 
     <div class="settings-label">名稱更改紀錄</div>
     <div id="settings-name-history"></div>
+
+    <!-- 清單習慣專屬區塊 -->
+    <div id="cl-settings-section" style="display:none;">
+      <div class="settings-label" style="margin-top:20px;">清單項目</div>
+      <div class="cl-items-list" id="cl-settings-items"></div>
+      <div class="cl-add-row">
+        <input class="text-input cl-add-input" id="cl-settings-new-item" placeholder="輸入一句話..." maxlength="60">
+        <button class="cl-add-confirm-btn" onclick="addChecklistSettingsItem()">新增</button>
+      </div>
+    </div>
 
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('habit-settings-modal')">取消</button>
@@ -1460,6 +1527,7 @@ function makeHabitCard(h, todayStr, chainId) {
   const rec = h.records[todayStr];
   const isDone = !!rec;
   const elapsed = rec && typeof rec === 'object' ? rec.secs : null;
+  const isChecklist = h.type === 'checklist';
   const card = document.createElement('div');
   card.className = 'habit-card' + (isDone ? ' done' : '');
   card.dataset.habitId = h.id;
@@ -1470,8 +1538,9 @@ function makeHabitCard(h, todayStr, chainId) {
     ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
   const elapsedLabel = elapsed != null
     ? `<span class="habit-elapsed-tag">${fmtSecs(elapsed)}</span>` : '';
+  const clBadge = isChecklist ? `<span class="cl-habit-badge">清單</span>` : '';
   card.innerHTML = `
-    <div class="habit-name">${h.name}${targetLabel}</div>
+    <div class="habit-name">${clBadge}${h.name}${targetLabel}</div>
     ${hasTimer && !isDone ? `<button class="habit-timer-btn">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
         <polygon points="5,3 19,12 5,21"/>
@@ -1493,7 +1562,11 @@ function makeHabitCard(h, todayStr, chainId) {
   }
   card.addEventListener('click', (e) => {
     addRipple(card, e);
-    toggleHabit(h.id, todayStr, chainId);
+    if (isChecklist && !isDone) {
+      openChecklistModal(h.id, todayStr, chainId);
+    } else {
+      toggleHabit(h.id, todayStr, chainId);
+    }
   });
   return card;
 }
@@ -1939,12 +2012,13 @@ function makeManageItem(h) {
 
   const partner = h.pairedWith ? data.habits.find(x => x.id === h.pairedWith) : null;
   const pairLabel = partner ? `<span style="font-size:11px;color:#92680A;font-weight:600;margin-left:6px;">⚡ ${partner.name}</span>` : '';
+  const clManageBadge = h.type === 'checklist' ? `<span class="cl-manage-badge">清單</span>` : '';
 
   item.innerHTML = `
     <div class="manage-item-body">
       <div class="manage-item-top">
         <div class="manage-item-name tappable-name" onclick="openHabitSettings('${h.id}')">
-          <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>${h.name}${isPaused ? ' <span style="font-size:11px;color:#F59E0B;font-weight:700;">休息中</span>' : ''}${pairLabel}
+          <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>${h.name}${isPaused ? ' <span style="font-size:11px;color:#F59E0B;font-weight:700;">休息中</span>' : ''}${pairLabel}${clManageBadge}
         </div>
         <div class="manage-btns">
           ${partner ? `<button class="btn-sm" style="background:rgba(255,194,0,0.2);color:#92680A;border:none;" onclick="unpairHabit('${h.id}')">解配</button>` : ''}
@@ -2034,6 +2108,64 @@ function clearPairSelect() {
   document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
   const hint = document.getElementById('pair-select-hint');
   if (hint) hint.style.display = 'none';
+}
+
+// ===== CHECKLIST MODAL =====
+let clExecHabitId = null, clExecDateStr = null, clExecChainId = null, clExecChecked = [];
+
+function openChecklistModal(habitId, dateStr, chainId) {
+  const h = data.habits.find(x => x.id === habitId);
+  if (!h) return;
+  const items = h.checklistItems || [];
+  if (items.length === 0) { toggleHabit(habitId, dateStr, chainId); return; }
+  clExecHabitId = habitId;
+  clExecDateStr = dateStr;
+  clExecChainId = chainId;
+  clExecChecked = new Array(items.length).fill(false);
+  document.getElementById('cl-exec-title').textContent = h.name;
+  renderClExecItems(h);
+  document.getElementById('cl-exec-modal').classList.add('open');
+}
+
+function renderClExecItems(h) {
+  const items = h.checklistItems || [];
+  document.getElementById('cl-exec-progress').textContent =
+    `${clExecChecked.filter(v => v).length} / ${items.length} 完成`;
+  const container = document.getElementById('cl-exec-items');
+  container.innerHTML = '';
+  items.forEach((text, idx) => {
+    const el = document.createElement('div');
+    el.className = 'cl-exec-item';
+    const checked = clExecChecked[idx];
+    el.innerHTML = `
+      <div class="cl-exec-check${checked ? ' checked' : ''}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="cl-exec-text${checked ? ' checked' : ''}">${text}</div>
+    `;
+    el.addEventListener('click', () => toggleClItem(idx));
+    container.appendChild(el);
+  });
+  const allDone = clExecChecked.every(v => v);
+  document.getElementById('cl-exec-done-btn').classList.toggle('ready', allDone);
+}
+
+function toggleClItem(idx) {
+  clExecChecked[idx] = !clExecChecked[idx];
+  const h = data.habits.find(x => x.id === clExecHabitId);
+  renderClExecItems(h);
+  if (clExecChecked.every(v => v)) setTimeout(() => tryCompleteChecklist(), 350);
+}
+
+function tryCompleteChecklist() {
+  if (!clExecChecked.every(v => v)) return;
+  closeChecklistModal();
+  toggleHabit(clExecHabitId, clExecDateStr, clExecChainId);
+}
+
+function closeChecklistModal() {
+  document.getElementById('cl-exec-modal').classList.remove('open');
+  clExecHabitId = null; clExecDateStr = null; clExecChainId = null; clExecChecked = [];
 }
 
 // executePair now re-renders manage page
@@ -2192,9 +2324,19 @@ function switchAddTab(tab) {
   setTimeout(() => document.getElementById(focusId).focus(), 50);
 }
 
+let newHabitType = 'normal';
+
+function selectHabitType(type) {
+  newHabitType = type;
+  document.getElementById('add-type-normal').classList.toggle('active', type === 'normal');
+  document.getElementById('add-type-checklist').classList.toggle('active', type === 'checklist');
+}
+
 function openAddModal() {
   document.getElementById('new-habit-name').value = '';
   document.getElementById('new-chain-name').value = '';
+  newHabitType = 'normal';
+  selectHabitType('normal');
   switchAddTab('habit');
   document.getElementById('add-habit-modal').classList.add('open');
   setTimeout(() => document.getElementById('new-habit-name').focus(), 300);
@@ -2206,7 +2348,8 @@ function addHabit() {
   const name = nameEl.value.trim();
   if (!name) { nameEl.focus(); return; }
   const id = 'h_' + Date.now();
-  data.habits.push({ id, name, chain: null, color: 'green', days: [0,1,2,3,4,5,6], endDate: null, pairedWith: null, nameHistory: [{ name, changedAt: today() }], records: {} });
+  const isChecklist = newHabitType === 'checklist';
+  data.habits.push({ id, name, chain: null, color: 'green', days: [0,1,2,3,4,5,6], endDate: null, pairedWith: null, nameHistory: [{ name, changedAt: today() }], records: {}, type: isChecklist ? 'checklist' : 'normal', checklistItems: isChecklist ? [] : null });
   saveData(data);
   nameEl.value = '';
   closeModal('add-habit-modal');
@@ -2262,8 +2405,44 @@ function openHabitSettings(id) {
     ).join('');
   }
 
+  // Show/hide checklist section
+  const isChecklist = h.type === 'checklist';
+  const clSection = document.getElementById('cl-settings-section');
+  clSection.style.display = isChecklist ? 'block' : 'none';
+  if (isChecklist) renderChecklistItemsEditor(h);
+
   openModal('habit-settings-modal');
   setTimeout(() => document.getElementById('settings-name').focus(), 350);
+}
+
+function renderChecklistItemsEditor(h) {
+  const items = h.checklistItems || [];
+  const container = document.getElementById('cl-settings-items');
+  container.innerHTML = '';
+  items.forEach((text, idx) => {
+    const row = document.createElement('div');
+    row.className = 'cl-item-row';
+    row.innerHTML = `<div class="cl-item-label">${text}</div><button class="cl-item-del-btn" onclick="removeChecklistSettingsItem(${idx})">×</button>`;
+    container.appendChild(row);
+  });
+}
+
+function addChecklistSettingsItem() {
+  const input = document.getElementById('cl-settings-new-item');
+  const text = input.value.trim();
+  if (!text || !settingsHabitId) return;
+  const h = data.habits.find(x => x.id === settingsHabitId);
+  if (!h.checklistItems) h.checklistItems = [];
+  h.checklistItems.push(text);
+  input.value = '';
+  renderChecklistItemsEditor(h);
+}
+
+function removeChecklistSettingsItem(idx) {
+  const h = data.habits.find(x => x.id === settingsHabitId);
+  if (!h || !h.checklistItems) return;
+  h.checklistItems.splice(idx, 1);
+  renderChecklistItemsEditor(h);
 }
 
 function togglePauseSection() {
@@ -2856,5 +3035,20 @@ checkMonthlySettlement();
 checkPendingNotifs();
 renderToday();
 </script>
+
+<!-- Checklist 執行 Modal -->
+<div class="cl-exec-overlay" id="cl-exec-modal">
+  <div class="cl-exec-modal">
+    <div class="cl-exec-header">
+      <div class="cl-exec-title" id="cl-exec-title"></div>
+      <div class="cl-exec-progress" id="cl-exec-progress"></div>
+    </div>
+    <div id="cl-exec-items"></div>
+    <div class="cl-exec-actions">
+      <button class="cl-exec-cancel-btn" onclick="closeChecklistModal()">返回</button>
+      <button class="cl-exec-done-btn" id="cl-exec-done-btn" onclick="tryCompleteChecklist()">全部完成 ✓</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
