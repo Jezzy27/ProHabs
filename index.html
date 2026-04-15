@@ -502,11 +502,14 @@
   .manage-item.dragging {
     opacity: 0.4; transform: scale(0.98);
   }
-  .manage-item.drag-placeholder {
-    background: var(--primary-light); border: 2px dashed var(--primary);
-    box-shadow: none; opacity: 1;
+  .drop-indicator {
+    height: 3px; background: var(--primary); border-radius: 99px;
+    margin: -2px 4px; position: relative; z-index: 10; pointer-events: none;
   }
-  .manage-item.drag-placeholder * { visibility: hidden; }
+  .drop-indicator::before {
+    content: ''; position: absolute; left: -4px; top: -4px;
+    width: 11px; height: 11px; border-radius: 50%; background: var(--primary);
+  }
 
   /* Drag handle */
   .drag-handle {
@@ -2059,7 +2062,7 @@ function onDragStart(e) {
   const habitId = item.dataset.habitId;
   const touch = e.touches[0];
   // Don't create ghost/placeholder yet — wait for real finger movement
-  dragState = { habitId, item, ghost: null, placeholder: null, startX: touch.clientX, startY: touch.clientY, activated: false };
+  dragState = { habitId, item, ghost: null, indicator: null, startX: touch.clientX, startY: touch.clientY, activated: false };
   document.addEventListener('touchmove', onDragMove, { passive: false });
   document.addEventListener('touchend', onDragEnd);
 }
@@ -2073,7 +2076,7 @@ function onDragMove(e) {
     const dx = touch.clientX - dragState.startX;
     const dy = touch.clientY - dragState.startY;
     if (Math.sqrt(dx*dx + dy*dy) < 10) return;
-    // Enough movement — now create ghost and placeholder
+    // Enough movement — create ghost + drop indicator
     const { item, habitId } = dragState;
     const rect = item.getBoundingClientRect();
     const ghost = document.createElement('div');
@@ -2083,38 +2086,37 @@ function onDragMove(e) {
     ghost.style.top = (touch.clientY - 24) + 'px';
     ghost.style.left = rect.left + 'px';
     document.body.appendChild(ghost);
-    const placeholder = document.createElement('div');
-    placeholder.className = 'manage-item drag-placeholder';
-    placeholder.style.height = rect.height + 'px';
-    item.parentNode.insertBefore(placeholder, item);
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-indicator';
+    item.parentNode.insertBefore(indicator, item);
     item.classList.add('dragging');
     dragState.ghost = ghost;
-    dragState.placeholder = placeholder;
+    dragState.indicator = indicator;
     dragState.activated = true;
   }
 
-  const { ghost, placeholder } = dragState;
+  const { ghost, indicator } = dragState;
   ghost.style.top = (touch.clientY - 24) + 'px';
 
   ghost.style.display = 'none';
-  placeholder.style.display = 'none';
+  indicator.style.display = 'none';
   const elBelow = document.elementFromPoint(touch.clientX, touch.clientY);
   ghost.style.display = '';
-  placeholder.style.display = '';
+  indicator.style.display = '';
 
   if (!elBelow) return;
-  const targetItem = elBelow.closest('.manage-item:not(.dragging):not(.drag-placeholder)');
+  const targetItem = elBelow.closest('.manage-item:not(.dragging)');
   const targetList = elBelow.closest('.chain-inner-list');
   if (targetItem) {
     const targetRect = targetItem.getBoundingClientRect();
     const midpoint = targetRect.top + targetRect.height / 2;
     if (touch.clientY < midpoint) {
-      targetItem.parentNode.insertBefore(placeholder, targetItem);
+      targetItem.parentNode.insertBefore(indicator, targetItem);
     } else {
-      targetItem.parentNode.insertBefore(placeholder, targetItem.nextSibling);
+      targetItem.parentNode.insertBefore(indicator, targetItem.nextSibling);
     }
   } else if (targetList) {
-    targetList.appendChild(placeholder);
+    targetList.appendChild(indicator);
   }
 }
 
@@ -2123,11 +2125,11 @@ function onDragEnd(e) {
   document.removeEventListener('touchmove', onDragMove);
   document.removeEventListener('touchend', onDragEnd);
   if (!dragState.activated) { dragState = null; return; }
-  const { habitId, item, ghost, placeholder } = dragState;
+  const { habitId, item, ghost, indicator } = dragState;
 
-  // Insert item where placeholder is
-  placeholder.parentNode.insertBefore(item, placeholder);
-  placeholder.remove();
+  // Insert item where indicator is, then remove indicator
+  indicator.parentNode.insertBefore(item, indicator);
+  indicator.remove();
   item.classList.remove('dragging');
   ghost.remove();
 
