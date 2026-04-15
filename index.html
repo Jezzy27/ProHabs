@@ -2162,8 +2162,9 @@ function toggleClItem(idx) {
 
 function tryCompleteChecklist() {
   if (!clExecChecked.every(v => v)) return;
+  const habitId = clExecHabitId, dateStr = clExecDateStr, chainId = clExecChainId;
   closeChecklistModal();
-  toggleHabit(clExecHabitId, clExecDateStr, clExecChainId);
+  toggleHabit(habitId, dateStr, chainId);
 }
 
 function closeChecklistModal() {
