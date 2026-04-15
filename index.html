@@ -1056,6 +1056,7 @@
 
     <div class="coin-modal-section">
       <div class="coin-modal-section-title">賺幣方式</div>
+      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">打勾一格</div><div class="earn-rule-sub">每打勾一個習慣格子</div></div><div class="earn-rule-amount">+10 金幣</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 金幣</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 金幣</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 金幣</div></div><div class="earn-rule-amount">1 金幣/分</div></div>
@@ -1521,12 +1522,18 @@ function toggleHabit(id, dateStr, chainId) {
   saveData(data);
   renderToday();
 
-  // Rewards (only on check-in, not un-check)
+  // Rewards / penalties on check toggle
   if (!wasChecked) {
+    awardCoins(10, `${h.name} 打卡 ✅`);
     checkComebackBonus(id, dateStr);
     checkStreakMilestone(id);
     checkDailyBonus(dateStr);
     checkPerfectWeek(dateStr);
+  } else {
+    data.totalCoins = Math.max(0, (data.totalCoins || 0) - 10);
+    saveData(data);
+    updateCoinDisplay();
+    showRewardToast(-10, `${h.name} 取消打卡`);
   }
 
   // Check chain complete
@@ -2516,7 +2523,7 @@ function awardCoins(amount, reason) {
 function showRewardToast(amount, reason) {
   const toast = document.createElement('div');
   toast.className = 'reward-toast';
-  toast.innerHTML = `<img src="dollar.png" style="width:24px;height:24px;"><div><div class="reward-toast-amount">+${amount} 金幣</div><div class="reward-toast-reason">${reason}</div></div>`;
+  toast.innerHTML = `<img src="dollar.png" style="width:24px;height:24px;"><div><div class="reward-toast-amount">${amount >= 0 ? '+' : ''}${amount} 金幣</div><div class="reward-toast-reason">${reason}</div></div>`;
   document.body.appendChild(toast);
   requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3200);
