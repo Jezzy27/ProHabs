@@ -410,29 +410,19 @@
   /* ===== MANAGE PAGE ===== */
   .manage-list { margin: 0 16px; }
 
-  /* 配對模式 */
-  .pair-mode-btn {
-    padding: 7px 14px; border-radius: 99px; border: 1.5px solid rgba(46,173,92,0.3);
-    background: transparent; color: var(--primary); font-size: 13px; font-weight: 700;
-    cursor: pointer; font-family: inherit; transition: all 0.2s;
+  /* 拖曳配對視覺 */
+  .habit-card.pair-preview {
+    border-color: #FFC200 !important;
+    box-shadow: 0 0 0 3px rgba(255,194,0,0.45), var(--shadow) !important;
+    transform: scale(1.025);
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
   }
-  .pair-mode-btn.active { background: #FFC200; border-color: #FFC200; color: #6B4A00; }
-  .pair-mode-banner {
-    margin: 0 16px 12px; padding: 12px 16px; background: rgba(255,194,0,0.12);
-    border-radius: 12px; border: 1.5px solid rgba(255,194,0,0.4);
-    font-size: 13px; color: #92680A; text-align: center; font-weight: 500; line-height: 1.5;
+  .habit-card.drag-source { opacity: 0.5; transform: scale(0.97); transition: all 0.15s; }
+  .pair-card.unpair-preview {
+    border-color: #F87171 !important;
+    box-shadow: 0 0 0 3px rgba(248,113,113,0.35) !important;
+    transition: all 0.15s;
   }
-  .manage-item.pair-selected {
-    border: 2px solid #FFC200 !important; background: #FFFDF0 !important;
-  }
-  .manage-item.pair-selectable { cursor: pointer; }
-  .manage-item.pair-selectable:active { opacity: 0.7; }
-  .pair-select-btn {
-    width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(46,173,92,0.3);
-    background: white; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0; transition: all 0.2s;
-  }
-  .manage-item.pair-selected .pair-select-btn { background: #FFC200; border-color: #FFC200; }
   .pair-tag {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 10px; padding: 2px 7px; border-radius: 99px;
@@ -868,10 +858,8 @@
 <div class="page" id="page-manage">
   <div class="header">
     <div class="header-text"><h1>管理習慣</h1><p>新增、改名、設定堆疊鏈條</p></div>
-    <button class="pair-mode-btn" id="pair-mode-btn" onclick="togglePairMode()">⚡ 配對</button>
   </div>
   <div class="scroll-area">
-    <div id="pair-mode-banner" style="display:none;" class="pair-mode-banner"></div>
     <div class="manage-list" id="manage-list"></div>
 
   </div>
@@ -1391,6 +1379,7 @@ function renderToday() {
   if (habits.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div>還沒有習慣<br>去管理頁面新增吧！</div>`;
   }
+  initTodayDrag();
 }
 
 function renderHabitOrPair(h, viewStr, chainId, renderedIds, container) {
@@ -1433,6 +1422,7 @@ function makePairRow(h, dateStr, chainId) {
   const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
   const row = document.createElement('div');
   row.className = 'pair-card-row' + (isDone ? ' done' : '');
+  row.dataset.habitId = h.id;
   row.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
   const hasTimer = h.targetUnit === '分鐘' || h.targetUnit === '秒';
   const targetLabel = h.targetNum && h.targetUnit ? `<span class="habit-target-tag">${h.targetNum} ${h.targetUnit}</span>` : '';
@@ -1465,6 +1455,7 @@ function makeHabitCard(h, todayStr, chainId) {
   const elapsed = rec && typeof rec === 'object' ? rec.secs : null;
   const card = document.createElement('div');
   card.className = 'habit-card' + (isDone ? ' done' : '');
+  card.dataset.habitId = h.id;
   const c = HABIT_COLORS[h.color] || HABIT_COLORS.green;
   card.style.cssText = `--hc-bg:${c.bg};--hc-done:${c.done};--hc-border:${c.border};--hc-accent:${c.accent};`;
   const hasTimer = h.targetUnit === '分鐘' || h.targetUnit === '秒';
@@ -1941,95 +1932,154 @@ function makeManageItem(h) {
   const partner = h.pairedWith ? data.habits.find(x => x.id === h.pairedWith) : null;
   const pairLabel = partner ? `<span style="font-size:11px;color:#92680A;font-weight:600;margin-left:6px;">⚡ ${partner.name}</span>` : '';
 
-  if (pairMode) {
-    const isSelected = pairFirstId === h.id;
-    if (isSelected) item.classList.add('pair-selected');
-    item.classList.add('pair-selectable');
-    item.innerHTML = `
-      <div class="manage-item-body" style="pointer-events:none;">
-        <div class="manage-item-top">
-          <div class="manage-item-name">
-            <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>
-            ${h.name}${pairLabel}
-          </div>
+  item.innerHTML = `
+    <div class="manage-item-body">
+      <div class="manage-item-top">
+        <div class="manage-item-name tappable-name" onclick="openHabitSettings('${h.id}')">
+          <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>${h.name}${isPaused ? ' <span style="font-size:11px;color:#F59E0B;font-weight:700;">休息中</span>' : ''}${pairLabel}
+        </div>
+        <div class="manage-btns">
+          ${partner ? `<button class="btn-sm" style="background:rgba(255,194,0,0.2);color:#92680A;border:none;" onclick="unpairHabit('${h.id}')">解配</button>` : ''}
+          <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
         </div>
       </div>
-      <div class="pair-select-btn">${isSelected ? '✓' : ''}</div>
-    `;
-    item.addEventListener('click', () => onPairSelect(h.id));
-  } else {
-    item.innerHTML = `
-      <div class="manage-item-body">
-        <div class="manage-item-top">
-          <div class="manage-item-name tappable-name" onclick="openHabitSettings('${h.id}')">
-            <span class="habit-color-dot" style="background:${(HABIT_COLORS[h.color]||HABIT_COLORS.green).accent}"></span>${h.name}${isPaused ? ' <span style="font-size:11px;color:#F59E0B;font-weight:700;">休息中</span>' : ''}${pairLabel}
-          </div>
-          <div class="manage-btns">
-            ${partner ? `<button class="btn-sm" style="background:rgba(255,194,0,0.2);color:#92680A;border:none;" onclick="unpairHabit('${h.id}')">解配</button>` : ''}
-            <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
-          </div>
-        </div>
-      </div>
-      <div class="drag-handle">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
-          <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-          <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
-        </svg>
-      </div>
-    `;
-  }
+    </div>
+    <div class="drag-handle">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
+        <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+        <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
+      </svg>
+    </div>
+  `;
   return item;
 }
 
 
-// ===== PAIR MODE =====
-let pairMode = false;
-let pairFirstId = null;
-
-function togglePairMode() {
-  pairMode = !pairMode;
-  pairFirstId = null;
-  document.getElementById('pair-mode-btn').classList.toggle('active', pairMode);
-  const banner = document.getElementById('pair-mode-banner');
-  if (pairMode) {
-    banner.style.display = 'block';
-    banner.textContent = '選擇第一個習慣';
-  } else {
-    banner.style.display = 'none';
-  }
-  renderManage();
+// ===== PAIR =====
+function executePair(idA, idB) {
+  const a = data.habits.find(x => x.id === idA);
+  const b = data.habits.find(x => x.id === idB);
+  if (!a || !b) return;
+  if (a.pairedWith) { const old = data.habits.find(x => x.id === a.pairedWith); if (old) old.pairedWith = null; }
+  if (b.pairedWith) { const old = data.habits.find(x => x.id === b.pairedWith); if (old) old.pairedWith = null; }
+  a.pairedWith = b.id;
+  b.pairedWith = a.id;
+  saveData(data);
+  todayDrag = null;
+  renderToday();
+  showToast(`⚡ 已配對：${a.name} + ${b.name}`);
 }
 
-function onPairSelect(id) {
-  if (!pairMode) return;
-  if (pairFirstId === null) {
-    pairFirstId = id;
-    document.getElementById('pair-mode-banner').textContent = '再選一個習慣來配對（再點一次可取消選取）';
-    renderManage();
-  } else if (pairFirstId === id) {
-    pairFirstId = null;
-    document.getElementById('pair-mode-banner').textContent = '選擇第一個習慣';
-    renderManage();
-  } else {
-    // Pair them
-    const a = data.habits.find(x => x.id === pairFirstId);
-    const b = data.habits.find(x => x.id === id);
-    if (a && b) {
-      // Unpair existing partners first
-      if (a.pairedWith) { const old = data.habits.find(x => x.id === a.pairedWith); if (old) old.pairedWith = null; }
-      if (b.pairedWith) { const old = data.habits.find(x => x.id === b.pairedWith); if (old) old.pairedWith = null; }
-      a.pairedWith = b.id;
-      b.pairedWith = a.id;
-      saveData(data);
-      showToast(`⚡ 已配對：${a.name} + ${b.name}`);
-    }
-    pairMode = false;
-    pairFirstId = null;
-    document.getElementById('pair-mode-btn').classList.remove('active');
-    document.getElementById('pair-mode-banner').style.display = 'none';
-    renderManage();
+// ===== TODAY DRAG-TO-PAIR =====
+let todayDrag = null;
+
+function initTodayDrag() {
+  // Standalone habit cards → drag onto another card to pair
+  document.querySelectorAll('#today-list .habit-card').forEach(card => {
+    card.addEventListener('touchstart', onTodayTouchStart, { passive: true });
+    card.addEventListener('touchmove', onTodayTouchMove, { passive: false });
+    card.addEventListener('touchend', onTodayTouchEnd, { passive: true });
+  });
+  // Pair-card rows → drag outside to unpair
+  document.querySelectorAll('#today-list .pair-card-row').forEach(row => {
+    row.addEventListener('touchstart', onTodayTouchStart, { passive: true });
+    row.addEventListener('touchmove', onTodayTouchMove, { passive: false });
+    row.addEventListener('touchend', onTodayTouchEnd, { passive: true });
+  });
+}
+
+function onTodayTouchStart(e) {
+  const el = e.currentTarget;
+  const id = el.dataset.habitId;
+  if (!id) return;
+  const t = e.touches[0];
+  const isPairRow = el.classList.contains('pair-card-row');
+  todayDrag = {
+    id, el,
+    startX: t.clientX, startY: t.clientY,
+    moved: false,
+    isPairRow,
+    pairCard: isPairRow ? el.closest('.pair-card') : null,
+    hoverTarget: null,
+    hoverTimer: null,
+  };
+}
+
+function onTodayTouchMove(e) {
+  if (!todayDrag) return;
+  const t = e.touches[0];
+  const dx = t.clientX - todayDrag.startX;
+  const dy = t.clientY - todayDrag.startY;
+  if (Math.sqrt(dx * dx + dy * dy) < 12) return;
+
+  if (!todayDrag.moved) {
+    todayDrag.moved = true;
+    todayDrag.el.classList.add('drag-source');
   }
+  e.preventDefault(); // prevent scroll while dragging
+
+  if (todayDrag.isPairRow) {
+    // Drag out of pair-card → show unpair preview
+    const pairRect = todayDrag.pairCard?.getBoundingClientRect();
+    if (pairRect) {
+      const outside = t.clientX < pairRect.left - 30 || t.clientX > pairRect.right + 30 ||
+                      t.clientY < pairRect.top - 40 || t.clientY > pairRect.bottom + 40;
+      todayDrag.pairCard.classList.toggle('unpair-preview', outside);
+    }
+  } else {
+    // Find habit-card under finger (hide source so elementFromPoint works)
+    todayDrag.el.style.visibility = 'hidden';
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    todayDrag.el.style.visibility = '';
+    const targetCard = under?.closest('.habit-card');
+    const targetId = targetCard?.dataset.habitId;
+
+    if (targetId && targetId !== todayDrag.id) {
+      if (todayDrag.hoverTarget !== targetCard) {
+        // New hover target — start countdown
+        clearTimeout(todayDrag.hoverTimer);
+        if (todayDrag.hoverTarget) todayDrag.hoverTarget.classList.remove('pair-preview');
+        todayDrag.hoverTarget = targetCard;
+        targetCard.classList.add('pair-preview');
+        todayDrag.hoverTimer = setTimeout(() => {
+          executePair(todayDrag.id, targetId);
+        }, 600);
+      }
+    } else {
+      // Not over a valid target — clear
+      clearTimeout(todayDrag.hoverTimer);
+      todayDrag.hoverTimer = null;
+      if (todayDrag.hoverTarget) {
+        todayDrag.hoverTarget.classList.remove('pair-preview');
+        todayDrag.hoverTarget = null;
+      }
+    }
+  }
+}
+
+function onTodayTouchEnd() {
+  if (!todayDrag) return;
+  clearTimeout(todayDrag.hoverTimer);
+  if (todayDrag.hoverTarget) todayDrag.hoverTarget.classList.remove('pair-preview');
+  todayDrag.el.classList.remove('drag-source');
+
+  // Unpair if dragged outside pair-card
+  if (todayDrag.isPairRow && todayDrag.moved && todayDrag.pairCard?.classList.contains('unpair-preview')) {
+    const h = data.habits.find(x => x.id === todayDrag.id);
+    if (h && h.pairedWith) {
+      const partner = data.habits.find(x => x.id === h.pairedWith);
+      if (partner) partner.pairedWith = null;
+      h.pairedWith = null;
+      saveData(data);
+      todayDrag = null;
+      renderToday();
+      showToast('已解除配對');
+      return;
+    }
+  }
+
+  todayDrag = null;
 }
 
 function unpairHabit(id) {
