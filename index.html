@@ -1973,6 +1973,8 @@ function initManagePairDrag() {
   document.querySelectorAll('#manage-list .manage-item').forEach(item => {
     const id = item.dataset.habitId;
     if (!id) return;
+
+    // Long press → enter pair mode (first selection)
     item.addEventListener('touchstart', e => {
       if (e.target.closest('.drag-handle') || e.target.closest('.manage-btns')) return;
       const startX = e.touches[0].clientX;
@@ -1992,24 +1994,32 @@ function initManagePairDrag() {
         onPairLongPress(id, item);
       }, 450);
     }, { passive: true });
+
+    // Tap → second selection (only when pair mode is active)
+    item.addEventListener('click', e => {
+      if (!pairSelectId) return;
+      if (e.target.closest('.manage-btns')) return;
+      onPairTap(id);
+    });
   });
 }
 
 function onPairLongPress(id, item) {
-  suppressNextClick = true;
-  setTimeout(() => { suppressNextClick = false; }, 300);
+  if (pairSelectId) return; // already in pair mode, ignore long press
+  pairSelectId = id;
+  document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
+  item.classList.add('pair-selected');
+  const hint = document.getElementById('pair-select-hint');
+  if (hint) { hint.textContent = '⚡ 點另一個習慣來配對，或再點同一個取消'; hint.style.display = 'block'; }
+}
 
-  if (pairSelectId && pairSelectId !== id) {
-    executePair(pairSelectId, id);
-    clearPairSelect();
-  } else if (pairSelectId === id) {
+function onPairTap(id) {
+  if (!pairSelectId) return;
+  if (pairSelectId === id) {
     clearPairSelect();
   } else {
-    pairSelectId = id;
-    document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
-    item.classList.add('pair-selected');
-    const hint = document.getElementById('pair-select-hint');
-    if (hint) { hint.textContent = '⚡ 再長按另一個習慣來配對，或再按同一個取消'; hint.style.display = 'block'; }
+    executePair(pairSelectId, id);
+    clearPairSelect();
   }
 }
 
@@ -2215,10 +2225,8 @@ let settingsHabitId = null;
 let settingsDays = [0,1,2,3,4,5,6];
 let settingsColor = 'green';
 
-let suppressNextClick = false;
-
 function openHabitSettings(id) {
-  if (suppressNextClick) { suppressNextClick = false; return; }
+  if (pairSelectId) { onPairTap(id); return; }
   settingsHabitId = id;
   const h = data.habits.find(x => x.id === id);
   document.getElementById('settings-name').value = h.name;
