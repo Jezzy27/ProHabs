@@ -1996,15 +1996,15 @@ function initManagePairDrag() {
 }
 
 function onPairLongPress(id, item) {
+  suppressNextClick = true;
+  setTimeout(() => { suppressNextClick = false; }, 300);
+
   if (pairSelectId && pairSelectId !== id) {
-    // Second long-press → pair
     executePair(pairSelectId, id);
     clearPairSelect();
   } else if (pairSelectId === id) {
-    // Same card → cancel
     clearPairSelect();
   } else {
-    // First long-press → select
     pairSelectId = id;
     document.querySelectorAll('#manage-list .manage-item').forEach(el => el.classList.remove('pair-selected'));
     item.classList.add('pair-selected');
@@ -2215,7 +2215,10 @@ let settingsHabitId = null;
 let settingsDays = [0,1,2,3,4,5,6];
 let settingsColor = 'green';
 
+let suppressNextClick = false;
+
 function openHabitSettings(id) {
+  if (suppressNextClick) { suppressNextClick = false; return; }
   settingsHabitId = id;
   const h = data.habits.find(x => x.id === id);
   document.getElementById('settings-name').value = h.name;
