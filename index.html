@@ -807,12 +807,14 @@
 
   /* Checklist items editor in settings */
   .cl-items-list { margin: 8px 0; }
-  .cl-item-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .cl-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
   .cl-item-label { flex: 1; font-size: 14px; color: var(--text); background: white; padding: 10px 12px; border-radius: 10px; line-height: 1.4; word-break: break-all; }
-  .cl-item-del-btn { width: 30px; height: 30px; border-radius: 50%; border: none; background: #FFE5E5; color: #C62828; font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-  .cl-add-row { display: flex; gap: 8px; align-items: center; }
-  .cl-add-input { flex: 1; }
-  .cl-add-confirm-btn { padding: 11px 16px; background: var(--primary); color: white; border: none; border-radius: var(--radius-btn); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .cl-item-move-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--primary-light); color: var(--primary); font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .cl-item-move-btn:disabled { opacity: 0.25; cursor: default; }
+  .cl-item-del-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: #FFE5E5; color: #C62828; font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .cl-add-row { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .cl-add-input { width: 100%; }
+  .cl-add-confirm-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius-btn); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
   /* Checklist execution modal */
   .cl-exec-overlay {
@@ -2422,9 +2424,24 @@ function renderChecklistItemsEditor(h) {
   items.forEach((text, idx) => {
     const row = document.createElement('div');
     row.className = 'cl-item-row';
-    row.innerHTML = `<div class="cl-item-label">${text}</div><button class="cl-item-del-btn" onclick="removeChecklistSettingsItem(${idx})">×</button>`;
+    row.innerHTML = `
+      <button class="cl-item-move-btn" onclick="moveChecklistItem(${idx},-1)" ${idx === 0 ? 'disabled' : ''}>↑</button>
+      <button class="cl-item-move-btn" onclick="moveChecklistItem(${idx},1)" ${idx === items.length - 1 ? 'disabled' : ''}>↓</button>
+      <div class="cl-item-label">${text}</div>
+      <button class="cl-item-del-btn" onclick="removeChecklistSettingsItem(${idx})">×</button>
+    `;
     container.appendChild(row);
   });
+}
+
+function moveChecklistItem(idx, dir) {
+  const h = data.habits.find(x => x.id === settingsHabitId);
+  if (!h || !h.checklistItems) return;
+  const items = h.checklistItems;
+  const target = idx + dir;
+  if (target < 0 || target >= items.length) return;
+  [items[idx], items[target]] = [items[target], items[idx]];
+  renderChecklistItemsEditor(h);
 }
 
 function addChecklistSettingsItem() {
