@@ -490,6 +490,11 @@
   .standalone-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; }
   .standalone-line { flex: 1; height: 1px; background: #C8DCBF; }
 
+  /* Chain management bar */
+  .chain-mgmt-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 14px; }
+  .chain-mgmt-chip { display: flex; align-items: center; gap: 6px; background: var(--primary-light); border-radius: 99px; padding: 6px 10px 6px 12px; font-size: 13px; font-weight: 600; color: var(--primary); }
+  .chain-mgmt-chip button { width: 20px; height: 20px; border-radius: 50%; border: none; background: rgba(46,173,92,0.2); color: var(--primary); font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+
   .manage-item {
     background: var(--card); border-radius: var(--radius-card);
     box-shadow: var(--shadow); padding: 16px 4px 16px 16px;
@@ -1193,6 +1198,9 @@
 
     <div class="settings-label">顏色</div>
     <div class="color-swatches" id="color-swatches"></div>
+
+    <div class="settings-label">鏈條 <span style="font-weight:400;text-transform:none;letter-spacing:0;">（選填）</span></div>
+    <select class="chain-select" id="settings-chain" style="width:100%;margin-bottom:4px;"></select>
 
     <div class="settings-label">顯示天數</div>
     <div class="day-custom-row">
@@ -1939,68 +1947,30 @@ function renderManage() {
   const list = document.getElementById('manage-list');
   list.innerHTML = '';
 
-  if (data.habits.length === 0) {
+  if (data.habits.length === 0 && data.chains.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div>還沒有任何習慣</div>`;
+    return;
   }
 
-  // Render chain sections
-  data.chains.forEach(chain => {
-    const chainHabits = data.habits.filter(h => h.chain === chain.id);
-    const section = document.createElement('div');
-    section.className = 'chain-section';
-    section.dataset.chainId = chain.id;
-
-    section.innerHTML = `
-      <div class="chain-section-header">
-        <span class="chain-section-name">🔗 ${chain.name}</span>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="chain-section-hint">長按拖移排序</span>
-          <button class="btn-sm btn-delete" onclick="deleteChain('${chain.id}')">刪</button>
-        </div>
-      </div>
-    `;
-
-    const innerList = document.createElement('div');
-    innerList.className = 'chain-inner-list';
-    innerList.dataset.chainId = chain.id;
-    innerList.style.cssText = 'padding-left:16px; min-height:8px;';
-
-    chainHabits.forEach(h => {
-      innerList.appendChild(makeManageItem(h));
+  // Chain management bar (delete chains)
+  if (data.chains.length > 0) {
+    const bar = document.createElement('div');
+    bar.className = 'chain-mgmt-bar';
+    data.chains.forEach(c => {
+      const chip = document.createElement('div');
+      chip.className = 'chain-mgmt-chip';
+      chip.innerHTML = `<span>🔗 ${c.name}</span><button onclick="deleteChain('${c.id}')">×</button>`;
+      bar.appendChild(chip);
     });
-
-    // Drop zone hint
-    if (chainHabits.length === 0) {
-      const dz = document.createElement('div');
-      dz.className = 'chain-drop-zone';
-      dz.dataset.chainId = chain.id;
-      dz.style.cssText = 'min-height:44px;background:var(--primary-light);border:2px dashed var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--primary);margin-bottom:8px;';
-      dz.textContent = '拖移習慣到這裡';
-      innerList.appendChild(dz);
-    }
-
-    section.appendChild(innerList);
-    list.appendChild(section);
-  });
-
-  // Standalone section
-  const standalone = data.habits.filter(h => !h.chain);
-  if (standalone.length > 0 || data.chains.length > 0) {
-    const standaloneSection = document.createElement('div');
-    standaloneSection.innerHTML = `
-      <div class="standalone-header">
-        <div class="standalone-line"></div>
-        <div class="standalone-label">獨立習慣</div>
-        <div class="standalone-line"></div>
-      </div>
-    `;
-    const standaloneList = document.createElement('div');
-    standaloneList.className = 'chain-inner-list';
-    standaloneList.dataset.chainId = '';
-    standalone.forEach(h => standaloneList.appendChild(makeManageItem(h)));
-    standaloneSection.appendChild(standaloneList);
-    list.appendChild(standaloneSection);
+    list.appendChild(bar);
   }
+
+  // Flat list — all habits in data.habits order
+  const flatList = document.createElement('div');
+  flatList.className = 'chain-inner-list';
+  flatList.dataset.chainId = '__flat__';
+  data.habits.forEach(h => flatList.appendChild(makeManageItem(h)));
+  list.appendChild(flatList);
 
   initDragDrop();
   initManagePairDrag();
@@ -2016,6 +1986,8 @@ function makeManageItem(h) {
   const partner = h.pairedWith ? data.habits.find(x => x.id === h.pairedWith) : null;
   const pairLabel = partner ? `<span style="font-size:11px;color:#92680A;font-weight:600;margin-left:6px;">⚡ ${partner.name}</span>` : '';
   const clManageBadge = h.type === 'checklist' ? `<span class="cl-manage-badge">清單</span>` : '';
+  const chainObj = h.chain ? data.chains.find(c => c.id === h.chain) : null;
+  const chainBadge = chainObj ? `<div class="manage-item-chain">🔗 ${chainObj.name}</div>` : '';
 
   item.innerHTML = `
     <div class="manage-item-body">
@@ -2028,6 +2000,7 @@ function makeManageItem(h) {
           <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
         </div>
       </div>
+      ${chainBadge}
     </div>
     <div class="drag-handle">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -2285,27 +2258,9 @@ function onDragEnd(e) {
   item.classList.remove('dragging');
   ghost.remove();
 
-  // Determine new chain from parent list
-  const parentList = item.closest('.chain-inner-list');
-  const newChainId = parentList ? (parentList.dataset.chainId || null) : null;
-
-  // Determine new order within chain/standalone
-  const siblings = Array.from(parentList ? parentList.querySelectorAll('.manage-item') : []);
-  const newOrder = siblings.map(el => el.dataset.habitId);
-
-  // Update data
-  const habit = data.habits.find(h => h.id === habitId);
-  if (habit) habit.chain = newChainId || null;
-
-  // Reorder data.habits to match DOM order
-  const otherHabits = data.habits.filter(h => !newOrder.includes(h.id));
-  const reorderedGroup = newOrder.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
-
-  // Rebuild full order: keep chains grouping
+  // Reorder data.habits to match flat DOM order (chain membership unchanged)
   const allIds = [];
-  document.querySelectorAll('.chain-inner-list').forEach(list => {
-    list.querySelectorAll('.manage-item').forEach(el => allIds.push(el.dataset.habitId));
-  });
+  document.querySelectorAll('#manage-list .manage-item').forEach(el => allIds.push(el.dataset.habitId));
   data.habits = allIds.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
 
   saveData(data);
@@ -2393,6 +2348,11 @@ function openHabitSettings(id) {
   document.getElementById('pause-resume-wrap').style.display = h.paused ? 'block' : 'none';
   renderColorSwatches();
   renderDayToggles();
+  // Chain selector
+  const chainSel = document.getElementById('settings-chain');
+  chainSel.innerHTML = '<option value="">無（獨立習慣）</option>' +
+    (data.chains || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  chainSel.value = h.chain || '';
 
   // Name history
   const hist = document.getElementById('settings-name-history');
@@ -2509,6 +2469,7 @@ function saveHabitSettings() {
   h.endDate = document.getElementById('settings-enddate').value || null;
   h.paused = document.getElementById('settings-paused').checked;
   h.resumeDate = h.paused ? (document.getElementById('settings-resumedate').value || null) : null;
+  h.chain = document.getElementById('settings-chain').value || null;
   saveData(data);
   closeModal('habit-settings-modal');
   renderManage();
