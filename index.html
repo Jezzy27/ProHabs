@@ -1952,25 +1952,36 @@ function renderManage() {
     return;
   }
 
-  // Chain management bar (delete chains)
-  if (data.chains.length > 0) {
-    const bar = document.createElement('div');
-    bar.className = 'chain-mgmt-bar';
-    data.chains.forEach(c => {
-      const chip = document.createElement('div');
-      chip.className = 'chain-mgmt-chip';
-      chip.innerHTML = `<span>🔗 ${c.name}</span><button onclick="deleteChain('${c.id}')">×</button>`;
-      bar.appendChild(chip);
-    });
-    list.appendChild(bar);
-  }
+  // Render in data.habits order: chain sections (when first habit of chain encountered) + standalone items
+  const seenChains = new Set();
+  data.habits.forEach(h => {
+    if (h.chain) {
+      if (seenChains.has(h.chain)) return; // already rendered as part of chain section
+      seenChains.add(h.chain);
+      const chain = data.chains.find(c => c.id === h.chain);
+      if (!chain) return;
 
-  // Flat list — all habits in data.habits order
-  const flatList = document.createElement('div');
-  flatList.className = 'chain-inner-list';
-  flatList.dataset.chainId = '__flat__';
-  data.habits.forEach(h => flatList.appendChild(makeManageItem(h)));
-  list.appendChild(flatList);
+      const section = document.createElement('div');
+      section.className = 'chain-section';
+      section.dataset.chainId = h.chain;
+      section.innerHTML = `
+        <div class="chain-section-header">
+          <span class="chain-section-name">🔗 ${chain.name}</span>
+          <button class="btn-sm btn-delete" style="background:rgba(255,255,255,0.2);color:white;border:none;" onclick="deleteChain('${chain.id}')">刪</button>
+        </div>
+      `;
+      const innerList = document.createElement('div');
+      innerList.className = 'chain-inner-list';
+      innerList.dataset.chainId = h.chain;
+      innerList.style.cssText = 'padding-left:12px;';
+      data.habits.filter(x => x.chain === h.chain).forEach(ch => innerList.appendChild(makeManageItem(ch)));
+      section.appendChild(innerList);
+      list.appendChild(section);
+    } else {
+      // Standalone: render directly into manage-list
+      list.appendChild(makeManageItem(h));
+    }
+  });
 
   initDragDrop();
   initManagePairDrag();
@@ -1986,8 +1997,6 @@ function makeManageItem(h) {
   const partner = h.pairedWith ? data.habits.find(x => x.id === h.pairedWith) : null;
   const pairLabel = partner ? `<span style="font-size:11px;color:#92680A;font-weight:600;margin-left:6px;">⚡ ${partner.name}</span>` : '';
   const clManageBadge = h.type === 'checklist' ? `<span class="cl-manage-badge">清單</span>` : '';
-  const chainObj = h.chain ? data.chains.find(c => c.id === h.chain) : null;
-  const chainBadge = chainObj ? `<div class="manage-item-chain">🔗 ${chainObj.name}</div>` : '';
 
   item.innerHTML = `
     <div class="manage-item-body">
@@ -2000,7 +2009,6 @@ function makeManageItem(h) {
           <button class="btn-sm btn-delete" onclick="openDelete('${h.id}')">刪</button>
         </div>
       </div>
-      ${chainBadge}
     </div>
     <div class="drag-handle">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -2230,18 +2238,39 @@ function onDragMove(e) {
   indicator.style.display = '';
 
   if (!elBelow) return;
-  const targetItem = elBelow.closest('.manage-item:not(.dragging)');
-  const targetList = elBelow.closest('.chain-inner-list');
-  if (targetItem) {
-    const targetRect = targetItem.getBoundingClientRect();
-    const midpoint = targetRect.top + targetRect.height / 2;
-    if (touch.clientY < midpoint) {
-      targetItem.parentNode.insertBefore(indicator, targetItem);
-    } else {
-      targetItem.parentNode.insertBefore(indicator, targetItem.nextSibling);
+
+  const dragHabit = data.habits.find(h => h.id === dragState.habitId);
+  const isStandalone = !dragHabit?.chain;
+
+  if (isStandalone) {
+    // Standalone item: indicator moves at #manage-list level (between chain sections / standalone items)
+    const manageList = document.getElementById('manage-list');
+    const chainSection = elBelow.closest('.chain-section');
+    const standaloneItem = elBelow.closest('.manage-item:not(.dragging)');
+    const topLevelTarget = chainSection || (standaloneItem && standaloneItem.parentNode === manageList ? standaloneItem : null);
+    if (topLevelTarget) {
+      const rect = topLevelTarget.getBoundingClientRect();
+      if (touch.clientY < rect.top + rect.height / 2) {
+        manageList.insertBefore(indicator, topLevelTarget);
+      } else {
+        manageList.insertBefore(indicator, topLevelTarget.nextSibling);
+      }
     }
-  } else if (targetList) {
-    targetList.appendChild(indicator);
+  } else {
+    // Chain habit: indicator stays within its chain-inner-list
+    const targetItem = elBelow.closest('.manage-item:not(.dragging)');
+    const targetList = elBelow.closest('.chain-inner-list');
+    if (targetItem && targetItem.closest('.chain-inner-list') === item.closest('.chain-inner-list')) {
+      const targetRect = targetItem.getBoundingClientRect();
+      const midpoint = targetRect.top + targetRect.height / 2;
+      if (touch.clientY < midpoint) {
+        targetItem.parentNode.insertBefore(indicator, targetItem);
+      } else {
+        targetItem.parentNode.insertBefore(indicator, targetItem.nextSibling);
+      }
+    } else if (targetList && targetList === item.closest('.chain-inner-list')) {
+      targetList.appendChild(indicator);
+    }
   }
 }
 
@@ -2258,9 +2287,16 @@ function onDragEnd(e) {
   item.classList.remove('dragging');
   ghost.remove();
 
-  // Reorder data.habits to match flat DOM order (chain membership unchanged)
+  // Rebuild data.habits from mixed DOM: chain sections contribute their habits in order,
+  // standalone manage-items (direct children of #manage-list) contribute their single habit
   const allIds = [];
-  document.querySelectorAll('#manage-list .manage-item').forEach(el => allIds.push(el.dataset.habitId));
+  document.querySelectorAll('#manage-list > .chain-section, #manage-list > .manage-item').forEach(el => {
+    if (el.classList.contains('chain-section')) {
+      el.querySelectorAll('.chain-inner-list .manage-item').forEach(mi => allIds.push(mi.dataset.habitId));
+    } else {
+      allIds.push(el.dataset.habitId);
+    }
+  });
   data.habits = allIds.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
 
   saveData(data);
