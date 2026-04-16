@@ -1954,33 +1954,47 @@ function renderManage() {
 
   // Render in data.habits order: chain sections (when first habit of chain encountered) + standalone items
   const seenChains = new Set();
+
+  function renderChainSection(chain) {
+    const section = document.createElement('div');
+    section.className = 'chain-section';
+    section.dataset.chainId = chain.id;
+    section.innerHTML = `
+      <div class="chain-section-header">
+        <span class="chain-section-name">🔗 ${chain.name}</span>
+        <button class="btn-sm btn-delete" style="background:rgba(255,255,255,0.2);color:white;border:none;" onclick="deleteChain('${chain.id}')">刪</button>
+      </div>
+    `;
+    const innerList = document.createElement('div');
+    innerList.className = 'chain-inner-list';
+    innerList.dataset.chainId = chain.id;
+    innerList.style.cssText = 'padding-left:12px;';
+    data.habits.filter(x => x.chain === chain.id).forEach(ch => innerList.appendChild(makeManageItem(ch)));
+    if (innerList.children.length === 0) {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'padding:10px 4px;font-size:13px;color:rgba(255,255,255,0.6);';
+      hint.textContent = '（從習慣設定指定此鏈條）';
+      innerList.appendChild(hint);
+    }
+    section.appendChild(innerList);
+    list.appendChild(section);
+  }
+
   data.habits.forEach(h => {
     if (h.chain) {
-      if (seenChains.has(h.chain)) return; // already rendered as part of chain section
+      if (seenChains.has(h.chain)) return;
       seenChains.add(h.chain);
       const chain = data.chains.find(c => c.id === h.chain);
       if (!chain) return;
-
-      const section = document.createElement('div');
-      section.className = 'chain-section';
-      section.dataset.chainId = h.chain;
-      section.innerHTML = `
-        <div class="chain-section-header">
-          <span class="chain-section-name">🔗 ${chain.name}</span>
-          <button class="btn-sm btn-delete" style="background:rgba(255,255,255,0.2);color:white;border:none;" onclick="deleteChain('${chain.id}')">刪</button>
-        </div>
-      `;
-      const innerList = document.createElement('div');
-      innerList.className = 'chain-inner-list';
-      innerList.dataset.chainId = h.chain;
-      innerList.style.cssText = 'padding-left:12px;';
-      data.habits.filter(x => x.chain === h.chain).forEach(ch => innerList.appendChild(makeManageItem(ch)));
-      section.appendChild(innerList);
-      list.appendChild(section);
+      renderChainSection(chain);
     } else {
-      // Standalone: render directly into manage-list
       list.appendChild(makeManageItem(h));
     }
+  });
+
+  // Render chains that have no habits yet (newly created empty chains)
+  data.chains.forEach(chain => {
+    if (!seenChains.has(chain.id)) renderChainSection(chain);
   });
 
   initDragDrop();
