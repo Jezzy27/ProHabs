@@ -95,8 +95,15 @@
   .shop-item-card.affordable { border-color: #FFC200; background: #FFFDF0; }
   .shop-item-card.bought { opacity: 0.7; }
   .shop-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
-  .shop-item-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .shop-item-name { font-size: 16px; font-weight: 700; color: var(--text); flex: 1; }
   .shop-item-price { font-size: 14px; font-weight: 800; color: #92680A; white-space: nowrap; margin-left: 8px; }
+  .shop-item-util-btns { display: flex; gap: 4px; align-items: center; margin-left: 8px; }
+  .shop-btn-util {
+    padding: 4px 10px; border-radius: 99px; border: none;
+    font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+  }
+  .shop-btn-util.edit { background: rgba(46,173,92,0.1); color: var(--primary); }
+  .shop-btn-util.delete { background: rgba(0,0,0,0.06); color: var(--text-sub); }
   .shop-item-badges { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
   .shop-badge { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 600; }
   .shop-badge.can-buy { background: #FFC200; color: #6B4A00; }
@@ -104,11 +111,10 @@
   .shop-item-progress { margin-top: 8px; }
   .shop-item-progress-track { height: 4px; background: rgba(255,194,0,0.15); border-radius: 99px; overflow: hidden; }
   .shop-item-progress-fill { height: 100%; background: #FFC200; border-radius: 99px; transition: width 0.4s; }
-  .shop-item-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .shop-btn { flex: 1; padding: 9px 0; border-radius: 99px; border: none; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .shop-item-actions { margin-top: 12px; }
+  .shop-btn { width: 100%; padding: 13px 0; border-radius: 99px; border: none; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: block; }
   .shop-btn.buy { background: #FFC200; color: #6B4A00; }
-  .shop-btn.edit { background: rgba(46,173,92,0.1); color: var(--primary); }
-  .shop-btn.delete { background: rgba(0,0,0,0.06); color: var(--text-sub); }
+  .shop-btn.buy:active { opacity: 0.85; }
   .add-shop-btn { width: 100%; padding: 14px; background: rgba(46,173,92,0.08); border: 2px dashed rgba(46,173,92,0.3); border-radius: 14px; color: var(--primary); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
 
   /* 新增商品 Modal */
@@ -464,10 +470,15 @@
   .chain-section { margin-bottom: 6px; }
   .chain-section-header {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px 10px 14px;
+    padding: 10px 14px 10px 8px;
     background: var(--primary); border-radius: 14px;
     margin-bottom: 4px;
   }
+  .chain-drag-handle {
+    width: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.55); cursor: grab; touch-action: none; padding: 4px 0;
+  }
+  .chain-drag-handle:active { cursor: grabbing; color: white; }
   .chain-section-name { color: white; font-size: 14px; font-weight: 700; flex: 1; }
   .chain-section-hint { color: rgba(255,255,255,0.7); font-size: 11px; }
 
@@ -504,6 +515,10 @@
     transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
     position: relative;
     touch-action: pan-y;
+  }
+  /* 獨立習慣（非鏈條內）加外框以示區別 */
+  #manage-list > .manage-item {
+    border: 1.5px solid #C2DCCA;
   }
   .manage-item.dragging {
     opacity: 0.4; transform: scale(0.98);
@@ -807,8 +822,29 @@
   #habit-settings-modal .modal { max-height: 85vh; overflow-y: auto; }
 
   /* Type toggle in add modal */
-  .add-type-row { display: flex; gap: 8px; margin-bottom: 14px; }
-  .add-type-btn { flex: 1; padding: 10px 4px; border-radius: var(--radius-btn); border: 1.5px solid var(--primary-light); background: transparent; color: var(--text-sub); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .add-main-input {
+    font-size: 18px !important; font-weight: 500;
+    padding: 16px 18px !important; margin-bottom: 16px;
+  }
+  .btn-confirm-full {
+    width: 100%; padding: 16px; border-radius: var(--radius-btn);
+    font-size: 16px; font-weight: 700; margin-bottom: 8px;
+    display: block;
+  }
+  .btn-add-cancel {
+    width: 100%; padding: 10px; border: none; background: none;
+    color: var(--text-sub); font-family: inherit; font-size: 14px;
+    cursor: pointer; display: block; text-align: center;
+  }
+  .add-type-row { display: flex; gap: 6px; margin-bottom: 16px; justify-content: flex-start; }
+  .add-type-btn {
+    padding: 5px 14px; border-radius: 99px;
+    border: 1.5px solid var(--primary-light);
+    background: transparent; color: var(--text-sub);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+    flex: 0 0 auto;
+  }
   .add-type-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
   /* Checklist items editor in settings */
@@ -925,7 +961,7 @@
 <!-- ===== MANAGE PAGE ===== -->
 <div class="page" id="page-manage">
   <div class="header">
-    <div class="header-text"><h1>管理習慣</h1><p>新增、改名、設定堆疊鏈條</p></div>
+    <div class="header-text"><h1>管理習慣</h1><p>新增、改名、設定堆疊鏈條</p><p style="margin-top:4px;font-size:12px;color:var(--text-sub);">長按習慣可配對，一起完成才算達標</p></div>
   </div>
   <div class="scroll-area">
     <div id="pair-select-hint" style="display:none;"></div>
@@ -954,19 +990,15 @@
         <button class="add-type-btn active" id="add-type-normal" onclick="selectHabitType('normal')">一般習慣</button>
         <button class="add-type-btn" id="add-type-checklist" onclick="selectHabitType('checklist')">☑ 清單習慣</button>
       </div>
-      <input class="text-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%;">
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
-        <button class="btn-confirm" onclick="addHabit()">新增</button>
-      </div>
+      <input class="text-input add-main-input" id="new-habit-name" placeholder="習慣名稱..." maxlength="30" style="width:100%;">
+      <button class="btn-confirm btn-confirm-full" onclick="addHabit()">新增習慣</button>
+      <button class="btn-add-cancel" onclick="closeModal('add-habit-modal')">取消</button>
     </div>
     <!-- 新增鏈條 -->
     <div id="add-panel-chain" style="display:none;">
-      <input class="text-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20" style="width:100%;">
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal('add-habit-modal')">取消</button>
-        <button class="btn-confirm" onclick="addChain()">新增</button>
-      </div>
+      <input class="text-input add-main-input" id="new-chain-name" placeholder="鏈條名稱（例：早晨鏈）" maxlength="20" style="width:100%;">
+      <button class="btn-confirm btn-confirm-full" onclick="addChain()">新增鏈條</button>
+      <button class="btn-add-cancel" onclick="closeModal('add-habit-modal')">取消</button>
     </div>
   </div>
 </div>
@@ -1068,9 +1100,8 @@
   <button class="nav-item" onclick="switchPage('backup',this)">
     <div class="nav-icon-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </div>
     <span>設定</span>
@@ -1371,10 +1402,12 @@ function renderToday() {
   const d = new Date(viewStr + 'T00:00:00');
   const dayNames = ['日','一','二','三','四','五','六'];
   const isToday = viewDateOffset === 0;
-  const label = isToday ? '今天' : viewDateOffset === -1 ? '昨天' : viewDateOffset === 1 ? '明天'
-    : `${d.getMonth()+1}月${d.getDate()}日`;
-  document.getElementById('today-date-display').textContent =
-    `${label}　${d.getMonth()+1}月${d.getDate()}日 週${dayNames[d.getDay()]}`;
+  let displayText;
+  if (isToday) displayText = '今天';
+  else if (viewDateOffset === -1) displayText = '昨天';
+  else if (viewDateOffset === 1) displayText = '明天';
+  else displayText = `${d.getMonth()+1}月${d.getDate()}日 週${dayNames[d.getDay()]}`;
+  document.getElementById('today-date-display').textContent = displayText;
 
   const dow = d.getDay();
   const habits = data.habits.filter(h => {
@@ -1963,6 +1996,9 @@ function renderManage() {
       <div class="chain-section-header">
         <span class="chain-section-name">🔗 ${chain.name}</span>
         <button class="btn-sm btn-delete" style="background:rgba(255,255,255,0.2);color:white;border:none;" onclick="deleteChain('${chain.id}')">刪</button>
+        <div class="chain-drag-handle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="5" r="2"/><circle cx="16" cy="5" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="19" r="2"/><circle cx="16" cy="19" r="2"/></svg>
+        </div>
       </div>
     `;
     const innerList = document.createElement('div');
@@ -1998,6 +2034,7 @@ function renderManage() {
   });
 
   initDragDrop();
+  initChainDrag();
   initManagePairDrag();
 }
 
@@ -2323,6 +2360,111 @@ function onDragEnd(e) {
 }
 
 
+
+// ── Chain section drag-and-drop ──
+let chainDragState = null;
+
+function initChainDrag() {
+  document.querySelectorAll('.chain-drag-handle').forEach(handle => {
+    handle.addEventListener('touchstart', onChainDragStart, { passive: false });
+  });
+}
+
+function onChainDragStart(e) {
+  e.preventDefault();
+  const section = e.currentTarget.closest('.chain-section');
+  if (!section) return;
+  const touch = e.touches[0];
+  chainDragState = { section, ghost: null, indicator: null, startX: touch.clientX, startY: touch.clientY, activated: false };
+  document.addEventListener('touchmove', onChainDragMove, { passive: false });
+  document.addEventListener('touchend', onChainDragEnd);
+}
+
+function onChainDragMove(e) {
+  if (!chainDragState) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+
+  if (!chainDragState.activated) {
+    const dx = touch.clientX - chainDragState.startX;
+    const dy = touch.clientY - chainDragState.startY;
+    if (Math.sqrt(dx*dx + dy*dy) < 10) return;
+    const { section } = chainDragState;
+    const rect = section.getBoundingClientRect();
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.textContent = section.querySelector('.chain-section-name')?.textContent || '';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.top = (touch.clientY - 24) + 'px';
+    ghost.style.left = rect.left + 'px';
+    document.body.appendChild(ghost);
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-indicator';
+    section.parentNode.insertBefore(indicator, section);
+    section.style.opacity = '0.4';
+    chainDragState.ghost = ghost;
+    chainDragState.indicator = indicator;
+    chainDragState.activated = true;
+  }
+
+  const { ghost, indicator, section } = chainDragState;
+  ghost.style.top = (touch.clientY - 24) + 'px';
+
+  ghost.style.display = 'none';
+  indicator.style.display = 'none';
+  const elBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+  ghost.style.display = '';
+  indicator.style.display = '';
+  if (!elBelow) return;
+
+  const manageList = document.getElementById('manage-list');
+  // Find the top-level element (chain-section or standalone manage-item) under finger
+  let topTarget = elBelow.closest('#manage-list > .chain-section, #manage-list > .manage-item');
+  // If finger is over the dragged section itself, skip
+  if (!topTarget || topTarget === section) return;
+
+  const rect = topTarget.getBoundingClientRect();
+  if (touch.clientY < rect.top + rect.height / 2) {
+    manageList.insertBefore(indicator, topTarget);
+  } else {
+    manageList.insertBefore(indicator, topTarget.nextSibling);
+  }
+}
+
+function onChainDragEnd(e) {
+  document.removeEventListener('touchmove', onChainDragMove);
+  document.removeEventListener('touchend', onChainDragEnd);
+  if (!chainDragState) return;
+  if (!chainDragState.activated) { chainDragState = null; return; }
+  const { section, ghost, indicator } = chainDragState;
+
+  indicator.parentNode.insertBefore(section, indicator);
+  indicator.remove();
+  section.style.opacity = '';
+  ghost.remove();
+
+  // Rebuild data.chains order from DOM
+  const chainOrder = [];
+  document.querySelectorAll('#manage-list > .chain-section').forEach(el => {
+    chainOrder.push(el.dataset.chainId);
+  });
+  data.chains = chainOrder.map(id => data.chains.find(c => c.id === id)).filter(Boolean);
+
+  // Rebuild data.habits order from mixed DOM
+  const allIds = [];
+  document.querySelectorAll('#manage-list > .chain-section, #manage-list > .manage-item').forEach(el => {
+    if (el.classList.contains('chain-section')) {
+      el.querySelectorAll('.chain-inner-list .manage-item').forEach(mi => allIds.push(mi.dataset.habitId));
+    } else {
+      allIds.push(el.dataset.habitId);
+    }
+  });
+  data.habits = allIds.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
+
+  saveData(data);
+  chainDragState = null;
+  setTimeout(() => renderManage(), 100);
+}
 
 function switchAddTab(tab) {
   document.getElementById('tab-habit').classList.toggle('active', tab === 'habit');
@@ -2651,13 +2793,16 @@ function openTimer(habitId, habitName, targetSecs, targetLabel) {
 }
 
 function toggleTimer() {
+  const btn = document.getElementById('timer-main-btn');
   if (timerRunning) {
     clearInterval(timerInterval);
     timerRunning = false;
-    document.getElementById('timer-main-btn').textContent = '▶';
+    btn.textContent = '▶';
+    btn.style.background = '#2EAD5C';
   } else {
     timerRunning = true;
-    document.getElementById('timer-main-btn').textContent = '⏸';
+    btn.textContent = '⏸';
+    btn.style.background = 'rgba(255,255,255,0.12)';
     timerInterval = setInterval(timerTick, 1000);
   }
 }
@@ -2700,7 +2845,7 @@ function timerComplete() {
   document.getElementById('timer-hint').textContent = '完成！辛苦了 🎉';
   const btn = document.getElementById('timer-main-btn');
   btn.textContent = '打卡完成！';
-  btn.style.background = '#0D9488';
+  btn.style.background = '#2EAD5C';
   btn.onclick = checkInAndClose;
 }
 
@@ -2945,7 +3090,13 @@ function renderShop() {
       card.innerHTML = `
         <div class="shop-item-top">
           <div class="shop-item-name">${item.name}</div>
-          <div class="shop-item-price"><img src="dollar.png" style="width:16px;height:16px;vertical-align:middle;margin-right:3px;">${item.price.toLocaleString()} 金幣</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px;">
+            <div class="shop-item-price"><img src="dollar.png" style="width:15px;height:15px;vertical-align:middle;margin-right:3px;">${item.price.toLocaleString()} 金幣</div>
+            <div class="shop-item-util-btns">
+              <button class="shop-btn-util edit" onclick="openEditShopItem('${item.id}')">編輯</button>
+              <button class="shop-btn-util delete" onclick="deleteShopItem('${item.id}')">移除</button>
+            </div>
+          </div>
         </div>
         <div class="shop-item-badges">
           ${affordable ? '<span class="shop-badge can-buy">可以買了！</span>' : `<span style="font-size:11px;color:var(--text-sub);">已存 ${Math.min(coins,item.price).toLocaleString()} / ${item.price.toLocaleString()}</span>`}
@@ -2953,8 +3104,6 @@ function renderShop() {
         <div class="shop-item-progress"><div class="shop-item-progress-track"><div class="shop-item-progress-fill" style="width:${pct}%"></div></div></div>
         <div class="shop-item-actions">
           <button class="shop-btn buy" onclick="confirmBuy('${item.id}')" ${affordable ? '' : 'style="opacity:0.45;"'}>購買</button>
-          <button class="shop-btn edit" onclick="openEditShopItem('${item.id}')">編輯</button>
-          <button class="shop-btn delete" onclick="deleteShopItem('${item.id}')">移除</button>
         </div>
       `;
       list.appendChild(card);
