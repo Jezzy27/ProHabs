@@ -2308,19 +2308,37 @@ function onDragMove(e) {
       }
     }
   } else {
-    // Chain habit: indicator stays within its chain-inner-list
-    const targetItem = elBelow.closest('.manage-item:not(.dragging)');
-    const targetList = elBelow.closest('.chain-inner-list');
-    if (targetItem && targetItem.closest('.chain-inner-list') === item.closest('.chain-inner-list')) {
-      const targetRect = targetItem.getBoundingClientRect();
-      const midpoint = targetRect.top + targetRect.height / 2;
-      if (touch.clientY < midpoint) {
-        targetItem.parentNode.insertBefore(indicator, targetItem);
+    // Chain habit: can move within its chain-inner-list OR out to #manage-list (to become standalone)
+    const manageList = document.getElementById('manage-list');
+    const targetInnerList = elBelow.closest('.chain-inner-list');
+    const myInnerList = item.closest('.chain-inner-list');
+
+    if (targetInnerList && targetInnerList === myInnerList) {
+      // Reordering within the same chain
+      const targetItem = elBelow.closest('.manage-item:not(.dragging)');
+      if (targetItem) {
+        const targetRect = targetItem.getBoundingClientRect();
+        if (touch.clientY < targetRect.top + targetRect.height / 2) {
+          targetItem.parentNode.insertBefore(indicator, targetItem);
+        } else {
+          targetItem.parentNode.insertBefore(indicator, targetItem.nextSibling);
+        }
       } else {
-        targetItem.parentNode.insertBefore(indicator, targetItem.nextSibling);
+        myInnerList.appendChild(indicator);
       }
-    } else if (targetList && targetList === item.closest('.chain-inner-list')) {
-      targetList.appendChild(indicator);
+    } else if (!targetInnerList) {
+      // Dragged outside any chain — treat like a standalone drop at #manage-list level
+      const chainSection = elBelow.closest('.chain-section');
+      const standaloneItem = elBelow.closest('.manage-item:not(.dragging)');
+      const topLevelTarget = chainSection || (standaloneItem && standaloneItem.parentNode === manageList ? standaloneItem : null);
+      if (topLevelTarget) {
+        const rect = topLevelTarget.getBoundingClientRect();
+        if (touch.clientY < rect.top + rect.height / 2) {
+          manageList.insertBefore(indicator, topLevelTarget);
+        } else {
+          manageList.insertBefore(indicator, topLevelTarget.nextSibling);
+        }
+      }
     }
   }
 }
@@ -2338,17 +2356,26 @@ function onDragEnd(e) {
   item.classList.remove('dragging');
   ghost.remove();
 
-  // Rebuild data.habits from mixed DOM: chain sections contribute their habits in order,
-  // standalone manage-items (direct children of #manage-list) contribute their single habit
+  // Rebuild data.habits from DOM, and update h.chain based on where each item landed
   const allIds = [];
+  const chainAssignment = {}; // habitId -> chainId or null
   document.querySelectorAll('#manage-list > .chain-section, #manage-list > .manage-item').forEach(el => {
     if (el.classList.contains('chain-section')) {
-      el.querySelectorAll('.chain-inner-list .manage-item').forEach(mi => allIds.push(mi.dataset.habitId));
+      const chainId = el.dataset.chainId;
+      el.querySelectorAll('.chain-inner-list .manage-item').forEach(mi => {
+        allIds.push(mi.dataset.habitId);
+        chainAssignment[mi.dataset.habitId] = chainId;
+      });
     } else {
       allIds.push(el.dataset.habitId);
+      chainAssignment[el.dataset.habitId] = null;
     }
   });
-  data.habits = allIds.map(id => data.habits.find(h => h.id === id)).filter(Boolean);
+  data.habits = allIds.map(id => {
+    const h = data.habits.find(h => h.id === id);
+    if (h && id in chainAssignment) h.chain = chainAssignment[id] || undefined;
+    return h;
+  }).filter(Boolean);
 
   saveData(data);
   dragState = null;
