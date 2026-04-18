@@ -24,6 +24,7 @@
     --nav-h: 80px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { overflow-x: hidden; }
   body {
     font-family: 'Noto Sans TC', sans-serif;
     background: var(--bg);
@@ -1430,70 +1431,66 @@ function renderToday() {
   const list = document.getElementById('today-list');
   list.innerHTML = '';
 
-  // Group by chain
+  // Build chainMap for today's habits
   const chainMap = {};
-  const standalone = [];
   habits.forEach(h => {
     if (h.chain) {
       if (!chainMap[h.chain]) chainMap[h.chain] = [];
       chainMap[h.chain].push(h);
-    } else {
-      standalone.push(h);
     }
   });
 
   const renderedIds = new Set();
+  const renderedChains = new Set();
+  const habitIdSet = new Set(habits.map(h => h.id));
 
-  // Render chains
-  data.chains.forEach(chain => {
-    const chainHabits = chainMap[chain.id];
-    if (!chainHabits || chainHabits.length === 0) return;
+  // Render in data.habits order (same as manage page): chain group appears at position of first habit
+  data.habits.forEach(h => {
+    if (!habitIdSet.has(h.id)) return;
+    if (renderedIds.has(h.id)) return;
 
-    const group = document.createElement('div');
-    group.className = 'chain-group';
+    if (h.chain) {
+      if (renderedChains.has(h.chain)) return;
+      renderedChains.add(h.chain);
 
-    const header = document.createElement('div');
-    header.className = 'chain-header';
-    header.innerHTML = `<div class="chain-line"></div><div class="chain-label">🔗 ${chain.name}</div><div class="chain-line"></div>`;
-    group.appendChild(header);
+      const chain = data.chains.find(c => c.id === h.chain);
+      if (!chain) return;
+      const chainHabits = chainMap[chain.id];
+      if (!chainHabits || chainHabits.length === 0) return;
 
-    const allDone = chainHabits.every(h => h.records[viewStr]);
-    const banner = document.createElement('div');
-    banner.className = 'chain-complete-banner' + (allDone ? ' show' : '');
-    banner.textContent = `🎉 ${chain.name} 完成！`;
-    banner.id = 'banner-' + chain.id;
-    group.appendChild(banner);
+      const group = document.createElement('div');
+      group.className = 'chain-group';
 
-    chainHabits.forEach((h, idx) => {
-      if (renderedIds.has(h.id)) return;
-      if (idx > 0 && !renderedIds.has(chainHabits[idx-1]?.id) === false) {
-        // only add arrow if previous item was rendered solo (not part of a pair that absorbed it)
-      }
-      const beforeCount = group.childElementCount;
-      renderHabitOrPair(h, viewStr, chain.id, renderedIds, group);
-      // Add arrow between items (not before first, not before pair-cards that were just added)
-      if (idx > 0 && group.childElementCount > beforeCount) {
-        const arrow = document.createElement('div');
-        arrow.className = 'chain-arrow';
-        arrow.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
-        group.insertBefore(arrow, group.lastElementChild);
-      }
-    });
+      const header = document.createElement('div');
+      header.className = 'chain-header';
+      header.innerHTML = `<div class="chain-line"></div><div class="chain-label">🔗 ${chain.name}</div><div class="chain-line"></div>`;
+      group.appendChild(header);
 
-    list.appendChild(group);
+      const allDone = chainHabits.every(h => h.records[viewStr]);
+      const banner = document.createElement('div');
+      banner.className = 'chain-complete-banner' + (allDone ? ' show' : '');
+      banner.textContent = `🎉 ${chain.name} 完成！`;
+      banner.id = 'banner-' + chain.id;
+      group.appendChild(banner);
+
+      chainHabits.forEach((ch, idx) => {
+        if (renderedIds.has(ch.id)) return;
+        const beforeCount = group.childElementCount;
+        renderHabitOrPair(ch, viewStr, chain.id, renderedIds, group);
+        if (idx > 0 && group.childElementCount > beforeCount) {
+          const arrow = document.createElement('div');
+          arrow.className = 'chain-arrow';
+          arrow.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
+          group.insertBefore(arrow, group.lastElementChild);
+        }
+      });
+
+      list.appendChild(group);
+    } else {
+      // Standalone habit: render directly into list at its natural position
+      renderHabitOrPair(h, viewStr, null, renderedIds, list);
+    }
   });
-
-  // Render standalone
-  if (standalone.length > 0) {
-    const group = document.createElement('div');
-    group.className = 'chain-group';
-    const header = document.createElement('div');
-    header.className = 'chain-header';
-    header.innerHTML = `<div class="chain-line"></div><div class="chain-label">獨立習慣</div><div class="chain-line"></div>`;
-    group.appendChild(header);
-    standalone.forEach(h => renderHabitOrPair(h, viewStr, null, renderedIds, group));
-    list.appendChild(group);
-  }
 
   if (habits.length === 0) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div>還沒有習慣<br>去管理頁面新增吧！</div>`;
