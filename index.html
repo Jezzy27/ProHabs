@@ -2120,8 +2120,18 @@ function initManagePairDrag() {
         }
       };
       item.addEventListener('touchmove', cancelOnMove, { passive: true });
+      const cancelOnEnd = () => {
+        clearTimeout(pairLongPressTimer);
+        item.removeEventListener('touchmove', cancelOnMove);
+        item.removeEventListener('touchend', cancelOnEnd);
+        item.removeEventListener('touchcancel', cancelOnEnd);
+      };
+      item.addEventListener('touchend', cancelOnEnd, { passive: true });
+      item.addEventListener('touchcancel', cancelOnEnd, { passive: true });
       pairLongPressTimer = setTimeout(() => {
         item.removeEventListener('touchmove', cancelOnMove);
+        item.removeEventListener('touchend', cancelOnEnd);
+        item.removeEventListener('touchcancel', cancelOnEnd);
         onPairLongPress(id, item);
       }, 450);
     }, { passive: true });
