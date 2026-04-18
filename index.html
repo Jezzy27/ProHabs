@@ -245,6 +245,7 @@
   #today-list > .pair-card {
     margin-left: 16px;
     margin-right: 16px;
+    border: 1.5px solid var(--hc-border, #C2DCCA);
   }
   /* Extra top gap when standalone card follows a chain group, or vice versa */
   #today-list > .chain-group + .habit-card,
@@ -833,7 +834,7 @@
   .backup-toast.show { opacity: 1; }
 
   /* ===== CHECKLIST HABIT ===== */
-  #habit-settings-modal .modal { max-height: 85vh; overflow-y: auto; }
+  #habit-settings-modal .modal { max-height: 85vh; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; }
 
   /* Type toggle in add modal */
   .add-main-input {
@@ -864,7 +865,8 @@
   /* Checklist items editor in settings */
   .cl-items-list { margin: 8px 0; }
   .cl-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .cl-item-label { flex: 1; font-size: 14px; color: var(--text); background: white; padding: 10px 12px; border-radius: 10px; line-height: 1.4; word-break: break-all; }
+  .cl-item-label { flex: 1; font-size: 14px; color: var(--text); background: white; padding: 10px 12px; border-radius: 10px; line-height: 1.4; word-break: break-all; cursor: pointer; }
+  .cl-item-edit-input { flex: 1; font-size: 14px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--primary); outline: none; font-family: inherit; color: var(--text); }
   .cl-item-move-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--primary-light); color: var(--primary); font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .cl-item-move-btn:disabled { opacity: 0.25; cursor: default; }
   .cl-item-del-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: #FFE5E5; color: #C62828; font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
@@ -1294,6 +1296,13 @@
         <input class="text-input cl-add-input" id="cl-settings-new-item" placeholder="輸入一句話..." maxlength="60">
         <button class="cl-add-confirm-btn" onclick="addChecklistSettingsItem()">新增</button>
       </div>
+      <div class="settings-label" style="margin-top:16px;">重複閱讀</div>
+      <div class="pause-row">
+        <label class="pause-toggle-wrap">
+          <input type="checkbox" id="settings-cl-repeat">
+          <span class="pause-toggle-label">完成後可重新打勾重唸</span>
+        </label>
+      </div>
     </div>
 
     <div class="modal-actions">
@@ -1617,7 +1626,9 @@ function makeHabitCard(h, todayStr, chainId) {
   card.addEventListener('click', (e) => {
     addRipple(card, e);
     if (isChecklist && !isDone) {
-      openChecklistModal(h.id, todayStr, chainId);
+      openChecklistModal(h.id, todayStr, chainId, false);
+    } else if (isChecklist && isDone && h.allowRepeat) {
+      openChecklistModal(h.id, todayStr, chainId, true);
     } else {
       toggleHabit(h.id, todayStr, chainId);
     }
@@ -2156,16 +2167,17 @@ function clearPairSelect() {
 }
 
 // ===== CHECKLIST MODAL =====
-let clExecHabitId = null, clExecDateStr = null, clExecChainId = null, clExecChecked = [];
+let clExecHabitId = null, clExecDateStr = null, clExecChainId = null, clExecChecked = [], clExecIsRepeat = false;
 
-function openChecklistModal(habitId, dateStr, chainId) {
+function openChecklistModal(habitId, dateStr, chainId, isRepeat = false) {
   const h = data.habits.find(x => x.id === habitId);
   if (!h) return;
   const items = h.checklistItems || [];
-  if (items.length === 0) { toggleHabit(habitId, dateStr, chainId); return; }
+  if (items.length === 0) { if (!isRepeat) toggleHabit(habitId, dateStr, chainId); return; }
   clExecHabitId = habitId;
   clExecDateStr = dateStr;
   clExecChainId = chainId;
+  clExecIsRepeat = isRepeat;
   clExecChecked = new Array(items.length).fill(false);
   document.getElementById('cl-exec-title').textContent = h.name;
   renderClExecItems(h);
@@ -2192,7 +2204,9 @@ function renderClExecItems(h) {
     container.appendChild(el);
   });
   const allDone = clExecChecked.every(v => v);
-  document.getElementById('cl-exec-done-btn').classList.toggle('ready', allDone);
+  const doneBtn = document.getElementById('cl-exec-done-btn');
+  doneBtn.classList.toggle('ready', allDone);
+  doneBtn.textContent = allDone ? (clExecIsRepeat ? '太棒了！✓' : '全部完成 ✓') : (clExecIsRepeat ? '重新打勾' : '全部完成 ✓');
 }
 
 function toggleClItem(idx) {
@@ -2204,6 +2218,7 @@ function toggleClItem(idx) {
 
 function tryCompleteChecklist() {
   if (!clExecChecked.every(v => v)) return;
+  if (clExecIsRepeat) { closeChecklistModal(); return; }
   const habitId = clExecHabitId, dateStr = clExecDateStr, chainId = clExecChainId;
   closeChecklistModal();
   toggleHabit(habitId, dateStr, chainId);
@@ -2211,7 +2226,7 @@ function tryCompleteChecklist() {
 
 function closeChecklistModal() {
   document.getElementById('cl-exec-modal').classList.remove('open');
-  clExecHabitId = null; clExecDateStr = null; clExecChainId = null; clExecChecked = [];
+  clExecHabitId = null; clExecDateStr = null; clExecChainId = null; clExecChecked = []; clExecIsRepeat = false;
 }
 
 // executePair now re-renders manage page
@@ -2602,7 +2617,10 @@ function openHabitSettings(id) {
   const isChecklist = h.type === 'checklist';
   const clSection = document.getElementById('cl-settings-section');
   clSection.style.display = isChecklist ? 'block' : 'none';
-  if (isChecklist) renderChecklistItemsEditor(h);
+  if (isChecklist) {
+    document.getElementById('settings-cl-repeat').checked = !!h.allowRepeat;
+    renderChecklistItemsEditor(h);
+  }
 
   openModal('habit-settings-modal');
   setTimeout(() => document.getElementById('settings-name').focus(), 350);
@@ -2621,6 +2639,22 @@ function renderChecklistItemsEditor(h) {
       <div class="cl-item-label">${text}</div>
       <button class="cl-item-del-btn" onclick="removeChecklistSettingsItem(${idx})">×</button>
     `;
+    const label = row.querySelector('.cl-item-label');
+    label.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.className = 'cl-item-edit-input';
+      input.value = text;
+      input.maxLength = 60;
+      label.replaceWith(input);
+      input.focus();
+      const save = () => {
+        const newText = input.value.trim();
+        if (newText && newText !== text) h.checklistItems[idx] = newText;
+        renderChecklistItemsEditor(h);
+      };
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+    });
     container.appendChild(row);
   });
 }
@@ -2699,6 +2733,7 @@ function saveHabitSettings() {
   h.paused = document.getElementById('settings-paused').checked;
   h.resumeDate = h.paused ? (document.getElementById('settings-resumedate').value || null) : null;
   h.chain = document.getElementById('settings-chain').value || null;
+  if (h.type === 'checklist') h.allowRepeat = document.getElementById('settings-cl-repeat').checked;
   saveData(data);
   closeModal('habit-settings-modal');
   renderManage();
