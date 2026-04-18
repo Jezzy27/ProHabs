@@ -246,6 +246,13 @@
     margin-left: 16px;
     margin-right: 16px;
   }
+  /* Extra top gap when standalone card follows a chain group, or vice versa */
+  #today-list > .chain-group + .habit-card,
+  #today-list > .chain-group + .pair-card,
+  #today-list > .habit-card + .chain-group,
+  #today-list > .pair-card + .chain-group {
+    margin-top: 16px;
+  }
   .chain-header {
     display: flex; align-items: center; gap: 8px;
     padding: 0 4px; margin-bottom: 8px;
