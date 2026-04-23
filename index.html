@@ -10,6 +10,7 @@
 <link rel="icon" type="image/jpeg" href="LOGO.jpg">
 <link rel="apple-touch-icon" href="LOGO.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #FFFFFF;
@@ -934,9 +935,54 @@
   .cl-habit-badge { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 99px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
   /* Checklist badge on manage list */
   .cl-manage-badge { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 99px; font-weight: 600; margin-left: 6px; }
+
+  /* 登入頁面 */
+  #login-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #F5F8F5; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 32px 28px;
+  }
+  .login-logo { width: 72px; height: 72px; border-radius: 20px; margin-bottom: 20px; object-fit: cover; }
+  .login-title { font-size: 28px; font-weight: 800; color: #1A3D2B; margin-bottom: 6px; letter-spacing: -1px; }
+  .login-sub { font-size: 14px; color: var(--text-sub); margin-bottom: 40px; }
+  .login-field { width: 100%; margin-bottom: 14px; }
+  .login-label { font-size: 12px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.4px; margin-bottom: 6px; display: block; }
+  .login-input {
+    width: 100%; box-sizing: border-box; padding: 14px 16px;
+    border: 1.5px solid #E0E0E0; border-radius: 14px;
+    font-size: 16px; font-family: inherit; background: white;
+    outline: none; transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--primary); }
+  .login-btn {
+    width: 100%; padding: 16px; background: var(--primary); color: white;
+    border: none; border-radius: 14px; font-size: 17px; font-weight: 700;
+    cursor: pointer; font-family: inherit; margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .login-btn:active { opacity: 0.85; }
+  .login-error { font-size: 13px; color: #E53E3E; text-align: center; margin-top: 12px; min-height: 18px; }
+  .login-loading { font-size: 14px; color: var(--text-sub); text-align: center; margin-top: 12px; }
 </style>
 </head>
 <body>
+
+<!-- 登入頁面 -->
+<div id="login-overlay">
+  <img class="login-logo" src="LOGO.jpg" alt="ProHabs">
+  <div class="login-title">ProHabs</div>
+  <div class="login-sub">登入你的帳號</div>
+  <div class="login-field">
+    <label class="login-label">Email</label>
+    <input class="login-input" id="login-email" type="email" placeholder="your@email.com" autocomplete="email">
+  </div>
+  <div class="login-field">
+    <label class="login-label">密碼</label>
+    <input class="login-input" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+  <button class="login-btn" onclick="doLogin()">登入</button>
+  <div class="login-error" id="login-error"></div>
+</div>
 
 <!-- ===== TODAY PAGE ===== -->
 <div class="page active" id="page-today">
@@ -1205,6 +1251,10 @@
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 金幣</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500 金幣</div></div><div class="earn-rule-amount">每月</div></div>
     </div>
+
+    <div style="padding: 8px 20px 12px;">
+      <button onclick="doLogout()" style="width:100%;padding:12px;background:transparent;border:1.5px solid rgba(0,0,0,0.12);border-radius:12px;font-size:14px;color:var(--text-sub);cursor:pointer;font-family:inherit;">登出</button>
+    </div>
   </div>
 </div>
 
@@ -1358,6 +1408,62 @@
 </div>
 
 <script>
+// ===== SUPABASE =====
+const SUPABASE_URL = 'https://owoqbbghsjwnhvvtizqn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QOXzT4BdgB6Kkc_oQl2Bow_k9_YoGkz';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.querySelector('.login-btn');
+  errEl.textContent = '';
+  btn.textContent = '登入中…';
+  btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.textContent = '登入';
+  btn.disabled = false;
+  if (error) {
+    errEl.textContent = '帳號或密碼錯誤，請再試一次';
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+    syncFromCloud();
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function syncFromCloud() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data: row, error } = await sb.from('user_data').select('data').eq('user_id', user.id).single();
+    if (error && error.code !== 'PGRST116') return; // PGRST116 = no rows
+    if (row?.data) {
+      data = row.data;
+      migrateData(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      updateCoinDisplay();
+      renderToday();
+    } else {
+      // 第一次登入，把本地資料推上雲端
+      await pushToCloud();
+    }
+  } catch (e) { /* 離線，用本地資料 */ }
+}
+
+async function pushToCloud() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    await sb.from('user_data').upsert({ user_id: user.id, data: data, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  } catch (e) { /* 離線，下次再同步 */ }
+}
+
 // ===== COLOR PALETTE =====
 const HABIT_COLORS = {
   red:    { bg: '#FFE8E8', done: '#FFC8C8', border: '#F08888', accent: '#EF4444' },
@@ -1393,6 +1499,7 @@ function loadData() {
 
 function saveData(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  pushToCloud();
 }
 
 function getDefaultData() {
@@ -3476,16 +3583,38 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
 document.getElementById('settings-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHabitSettings(); });
 
-// 手機螢幕解鎖後立即同步計時器
+// 手機螢幕解鎖後立即同步計時器 + 雲端同步
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && timerRunning) timerTick();
+  if (!document.hidden) {
+    if (timerRunning) timerTick();
+    pushToCloud();
+  }
 });
 
-// Init
-checkMonthlySettlement();
-checkPendingNotifs();
-renderToday();
-initCoinModalSwipe();
+// 網路恢復時同步
+window.addEventListener('online', pushToCloud);
+
+// ===== INIT =====
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    // 未登入：顯示登入頁，等待用戶操作
+    document.getElementById('login-overlay').style.display = 'flex';
+  } else {
+    // 已登入：隱藏登入頁，啟動 App
+    document.getElementById('login-overlay').style.display = 'none';
+    checkMonthlySettlement();
+    checkPendingNotifs();
+    renderToday();
+    initCoinModalSwipe();
+    syncFromCloud();
+  }
+})();
+
+// Enter 鍵登入
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
 </script>
 
 <!-- Checklist 執行 Modal -->
