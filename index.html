@@ -963,6 +963,11 @@
   .login-btn:active { opacity: 0.85; }
   .login-error { font-size: 13px; color: #E53E3E; text-align: center; margin-top: 12px; min-height: 18px; }
   .login-loading { font-size: 14px; color: var(--text-sub); text-align: center; margin-top: 12px; }
+  #set-password-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #F5F8F5; display: none; flex-direction: column;
+    align-items: center; justify-content: center; padding: 32px 28px;
+  }
 </style>
 </head>
 <body>
@@ -982,6 +987,23 @@
   </div>
   <button class="login-btn" onclick="doLogin()">登入</button>
   <div class="login-error" id="login-error"></div>
+</div>
+
+<!-- 設定新密碼頁面（邀請連結用）-->
+<div id="set-password-overlay">
+  <img class="login-logo" src="LOGO.jpg" alt="ProHabs">
+  <div class="login-title">設定密碼</div>
+  <div class="login-sub">歡迎加入 ProHabs！請設定你的登入密碼</div>
+  <div class="login-field">
+    <label class="login-label">新密碼</label>
+    <input class="login-input" id="set-pw-input" type="password" placeholder="至少 6 個字元" autocomplete="new-password">
+  </div>
+  <div class="login-field">
+    <label class="login-label">確認密碼</label>
+    <input class="login-input" id="set-pw-confirm" type="password" placeholder="再輸入一次" autocomplete="new-password">
+  </div>
+  <button class="login-btn" onclick="doSetPassword()">確認並進入 App</button>
+  <div class="login-error" id="set-pw-error"></div>
 </div>
 
 <!-- ===== TODAY PAGE ===== -->
@@ -1413,11 +1435,29 @@ const SUPABASE_URL = 'https://owoqbbghsjwnhvvtizqn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_QOXzT4BdgB6Kkc_oQl2Bow_k9_YoGkz';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+function getUrlTokenType() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  return params.get('type'); // 'invite' | 'recovery' | null
+}
+
+function startApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('set-password-overlay').style.display = 'none';
+  // clear invite/recovery hash from URL
+  history.replaceState(null, '', window.location.pathname);
+  checkMonthlySettlement();
+  checkPendingNotifs();
+  renderToday();
+  updateCoinDisplay();
+  initCoinModalSwipe();
+  syncFromCloud();
+}
+
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl = document.getElementById('login-error');
-  const btn = document.querySelector('.login-btn');
+  const btn = document.getElementById('login-overlay').querySelector('.login-btn');
   errEl.textContent = '';
   btn.textContent = '登入中…';
   btn.disabled = true;
@@ -1427,8 +1467,27 @@ async function doLogin() {
   if (error) {
     errEl.textContent = '帳號或密碼錯誤，請再試一次';
   } else {
-    document.getElementById('login-overlay').style.display = 'none';
-    syncFromCloud();
+    startApp();
+  }
+}
+
+async function doSetPassword() {
+  const pw = document.getElementById('set-pw-input').value;
+  const pw2 = document.getElementById('set-pw-confirm').value;
+  const errEl = document.getElementById('set-pw-error');
+  const btn = document.getElementById('set-password-overlay').querySelector('.login-btn');
+  errEl.textContent = '';
+  if (pw.length < 6) { errEl.textContent = '密碼至少需要 6 個字元'; return; }
+  if (pw !== pw2) { errEl.textContent = '兩次密碼不一致，請再確認'; return; }
+  btn.textContent = '設定中…';
+  btn.disabled = true;
+  const { error } = await sb.auth.updateUser({ password: pw });
+  btn.textContent = '確認並進入 App';
+  btn.disabled = false;
+  if (error) {
+    errEl.textContent = '設定失敗，請重試';
+  } else {
+    startApp();
   }
 }
 
@@ -3596,24 +3655,34 @@ window.addEventListener('online', pushToCloud);
 
 // ===== INIT =====
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    // 未登入：顯示登入頁，等待用戶操作
-    document.getElementById('login-overlay').style.display = 'flex';
-  } else {
-    // 已登入：隱藏登入頁，啟動 App
+  const tokenType = getUrlTokenType();
+
+  // 邀請 / 重設密碼連結：等 SDK 處理 token 後顯示設定密碼頁
+  if (tokenType === 'invite' || tokenType === 'recovery') {
     document.getElementById('login-overlay').style.display = 'none';
-    checkMonthlySettlement();
-    checkPendingNotifs();
-    renderToday();
-    initCoinModalSwipe();
-    syncFromCloud();
+    sb.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
+        document.getElementById('set-password-overlay').style.display = 'flex';
+      }
+    });
+    return;
+  }
+
+  // 一般流程：檢查是否已登入
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    startApp();
+  } else {
+    document.getElementById('login-overlay').style.display = 'flex';
   }
 })();
 
 // Enter 鍵登入
 document.getElementById('login-password').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
+});
+document.getElementById('set-pw-confirm').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSetPassword();
 });
 </script>
 
