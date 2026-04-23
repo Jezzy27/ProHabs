@@ -1162,6 +1162,12 @@
         </button>
       </div>
 
+      <div class="backup-card">
+        <div class="backup-card-title">👤 帳號</div>
+        <div class="backup-card-desc" id="settings-user-email" style="margin-bottom:14px;"></div>
+        <button class="btn-backup btn-danger" onclick="doLogout()" style="background:transparent;color:var(--text-sub);border-color:rgba(0,0,0,0.15);">登出</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1274,9 +1280,6 @@
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500 金幣</div></div><div class="earn-rule-amount">每月</div></div>
     </div>
 
-    <div style="padding: 8px 20px 12px;">
-      <button onclick="doLogout()" style="width:100%;padding:12px;background:transparent;border:1.5px solid rgba(0,0,0,0.12);border-radius:12px;font-size:14px;color:var(--text-sub);cursor:pointer;font-family:inherit;">登出</button>
-    </div>
   </div>
 </div>
 
@@ -1440,10 +1443,9 @@ function getUrlTokenType() {
   return params.get('type'); // 'invite' | 'recovery' | null
 }
 
-function startApp() {
+async function startApp() {
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('set-password-overlay').style.display = 'none';
-  // clear invite/recovery hash from URL
   history.replaceState(null, '', window.location.pathname);
   checkMonthlySettlement();
   checkPendingNotifs();
@@ -1451,6 +1453,12 @@ function startApp() {
   updateCoinDisplay();
   initCoinModalSwipe();
   syncFromCloud();
+  // 顯示帳號 email 在設定頁
+  const { data: { user } } = await sb.auth.getUser();
+  if (user) {
+    const el = document.getElementById('settings-user-email');
+    if (el) el.textContent = user.email;
+  }
 }
 
 async function doLogin() {
