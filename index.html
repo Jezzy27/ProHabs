@@ -87,6 +87,31 @@
   .earn-rule-sub { font-size: 11px; color: rgba(0,0,0,0.35); margin-top: 2px; }
   .earn-rule-amount { font-size: 13px; font-weight: 700; color: rgba(146,104,10,0.6); white-space: nowrap; margin-left: 12px; }
 
+  /* 自由計時 */
+  .free-timer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .free-timer-tag {
+    padding: 6px 14px; border-radius: 99px; background: rgba(0,0,0,0.06);
+    font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.55);
+    cursor: pointer; user-select: none; transition: background 0.15s, color 0.15s;
+  }
+  .free-timer-tag.selected { background: #2EAD5C; color: white; }
+  .free-timer-tag-add {
+    padding: 6px 14px; border-radius: 99px;
+    border: 1.5px dashed rgba(0,0,0,0.2); font-size: 13px;
+    color: rgba(0,0,0,0.35); cursor: pointer;
+  }
+  .free-timer-input {
+    width: 100%; box-sizing: border-box; border: none;
+    border-bottom: 1.5px solid rgba(0,0,0,0.1); background: transparent;
+    padding: 8px 2px; font-size: 15px; font-family: inherit;
+    outline: none; margin-bottom: 12px; color: rgba(0,0,0,0.7);
+  }
+  .free-timer-start-btn {
+    width: 100%; padding: 13px; background: #2EAD5C; color: white;
+    border: none; border-radius: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+
   /* 商店 */
   .shop-item-card {
     background: white; border-radius: 14px; padding: 14px 16px;
@@ -1163,6 +1188,13 @@
     </div>
 
     <div class="coin-modal-section">
+      <div class="coin-modal-section-title">自由計時</div>
+      <div class="free-timer-tags" id="free-timer-tags"></div>
+      <input class="free-timer-input" id="free-timer-input" placeholder="活動名稱（選填）" maxlength="20">
+      <button class="free-timer-start-btn" onclick="startFreeTimer()">開始計時 · 1 金幣/分鐘</button>
+    </div>
+
+    <div class="coin-modal-section">
       <div class="coin-modal-section-title">賺幣方式</div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">打勾一格</div><div class="earn-rule-sub">每打勾一個習慣格子</div></div><div class="earn-rule-amount">+10 金幣</div></div>
       <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 金幣</div></div>
@@ -1353,6 +1385,7 @@ function loadData() {
     if (!d.claimedMilestones) d.claimedMilestones = {};
     if (!d.lastSettledMonth) d.lastSettledMonth = '';
     if (!d.shopItems) d.shopItems = [];
+    if (!d.freeTimerTags) d.freeTimerTags = ['閱讀', '學習', '運動'];
     d.habits.forEach(h => { if (h.pairedWith === undefined) h.pairedWith = null; });
     return d;
   } catch { return getDefaultData(); }
@@ -1382,7 +1415,8 @@ function getDefaultData() {
     claimedWeekBonus: {},
     claimedMilestones: {},
     lastSettledMonth: '',
-    shopItems: []
+    shopItems: [],
+    freeTimerTags: ['閱讀', '學習', '運動']
   };
 }
 
@@ -2850,6 +2884,8 @@ let timerElapsed = 0;
 let timerRunning = false;
 let timerGoalReached = false;
 let timer2minNotified = false;
+let timerMode = 'habit'; // 'habit' | 'free'
+let freeTimerSelectedTag = null;
 
 function openTimer(habitId, habitName, targetSecs, targetLabel) {
   timerHabitId = habitId;
@@ -2891,16 +2927,17 @@ function toggleTimer() {
 
 function timerTick() {
   timerElapsed++;
-  const progress = timerTargetSecs > 0
-    ? Math.min(timerElapsed / timerTargetSecs, 1) : 0;
+  const progress = timerMode === 'free'
+    ? Math.min(timerElapsed / 3600, 1)
+    : (timerTargetSecs > 0 ? Math.min(timerElapsed / timerTargetSecs, 1) : 0);
   document.getElementById('timer-ring-progress').style.strokeDashoffset =
     CIRCUMFERENCE * (1 - progress);
   const m = Math.floor(timerElapsed / 60);
   const s = timerElapsed % 60;
   document.getElementById('timer-display').textContent =
     `${m}:${String(s).padStart(2, '0')}`;
-  // 解鎖打卡按鈕：目標 < 2分鐘 → 達標解鎖；其他 → 2分鐘解鎖
-  const unlockAt = (timerTargetSecs > 0 && timerTargetSecs < 120) ? timerTargetSecs : 120;
+  // 解鎖按鈕：自由計時固定 2 分鐘解鎖；習慣計時依目標
+  const unlockAt = (timerMode === 'free' || timerTargetSecs === 0 || timerTargetSecs >= 120) ? 120 : timerTargetSecs;
   if (timerElapsed === unlockAt) {
     document.getElementById('timer-early-btn').style.display = 'block';
   }
@@ -2908,12 +2945,17 @@ function timerTick() {
   if (!timer2minNotified && timerElapsed === 120) {
     timer2minNotified = true;
     document.getElementById('timer-overlay').classList.add('milestone');
-    if (timerTargetSecs > 120) {
+    if (timerMode !== 'free' && timerTargetSecs > 120) {
       document.getElementById('timer-hint').textContent = '已堅持兩分鐘，繼續往目標衝！';
     }
   }
-  // 達標
-  if (!timerGoalReached && timerTargetSecs > 0 && timerElapsed >= timerTargetSecs) {
+  // 自由計時：顯示已賺金幣
+  if (timerMode === 'free' && timerElapsed > 120) {
+    const earned = Math.floor(timerElapsed / 60);
+    document.getElementById('timer-hint').textContent = `已賺 ${earned} 金幣，隨時可領取`;
+  }
+  // 達標（習慣計時專用）
+  if (timerMode !== 'free' && !timerGoalReached && timerTargetSecs > 0 && timerElapsed >= timerTargetSecs) {
     timerGoalReached = true;
     document.getElementById('timer-overlay').classList.add('milestone');
     const enc = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
@@ -2932,6 +2974,20 @@ function timerComplete() {
 }
 
 function checkInAndClose() {
+  if (timerMode === 'free') {
+    const earned = Math.floor(timerElapsed / 60);
+    const activityName = document.getElementById('timer-habit-name').textContent || '自由計時';
+    cancelTimer();
+    if (earned > 0) {
+      if (data.totalCoins == null) data.totalCoins = 0;
+      data.totalCoins += earned;
+      saveData(data);
+      updateCoinDisplay();
+      showRewardToast(earned, `${activityName} ⏱`);
+      showCoinReward(earned);
+    }
+    return;
+  }
   const ts = getViewDateStr();
   const h = data.habits.find(x => x.id === timerHabitId);
   if (h && !h.records[ts]) {
@@ -3130,10 +3186,99 @@ function closePendingModal() {
   document.getElementById('pending-modal-overlay').classList.remove('open');
 }
 
+// ===== FREE TIMER =====
+function renderFreeTimerTags() {
+  if (!data.freeTimerTags) data.freeTimerTags = ['閱讀', '學習', '運動'];
+  const wrap = document.getElementById('free-timer-tags');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  data.freeTimerTags.forEach((tag, i) => {
+    const el = document.createElement('div');
+    el.className = 'free-timer-tag' + (freeTimerSelectedTag === tag ? ' selected' : '');
+    el.textContent = tag;
+    el.onclick = () => selectFreeTimerTag(tag);
+    let lpTimer;
+    const startLP = () => { lpTimer = setTimeout(() => deleteFreeTimerTag(i), 600); };
+    const clearLP = () => clearTimeout(lpTimer);
+    el.addEventListener('touchstart', startLP, { passive: true });
+    el.addEventListener('touchend', clearLP);
+    el.addEventListener('touchmove', clearLP, { passive: true });
+    el.addEventListener('mousedown', startLP);
+    el.addEventListener('mouseup', clearLP);
+    wrap.appendChild(el);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'free-timer-tag-add';
+  addBtn.textContent = '＋';
+  addBtn.onclick = addFreeTimerTag;
+  wrap.appendChild(addBtn);
+}
+
+function selectFreeTimerTag(tag) {
+  freeTimerSelectedTag = freeTimerSelectedTag === tag ? null : tag;
+  const input = document.getElementById('free-timer-input');
+  if (input) input.value = freeTimerSelectedTag || '';
+  renderFreeTimerTags();
+}
+
+function addFreeTimerTag() {
+  const name = prompt('新增計時項目名稱');
+  if (!name || !name.trim()) return;
+  if (!data.freeTimerTags) data.freeTimerTags = [];
+  data.freeTimerTags.push(name.trim());
+  saveData(data);
+  renderFreeTimerTags();
+}
+
+function deleteFreeTimerTag(idx) {
+  const tag = data.freeTimerTags[idx];
+  if (!confirm(`刪除「${tag}」？`)) return;
+  data.freeTimerTags.splice(idx, 1);
+  if (freeTimerSelectedTag === tag) {
+    freeTimerSelectedTag = null;
+    const input = document.getElementById('free-timer-input');
+    if (input) input.value = '';
+  }
+  saveData(data);
+  renderFreeTimerTags();
+}
+
+function startFreeTimer() {
+  const input = document.getElementById('free-timer-input');
+  const name = (input ? input.value.trim() : '') || freeTimerSelectedTag || '自由計時';
+  timerMode = 'free';
+  closeCoinModal();
+  timerHabitId = null;
+  timerTargetSecs = 0;
+  timerTargetLabel = '';
+  timerElapsed = 0;
+  timerRunning = false;
+  timerGoalReached = false;
+  timer2minNotified = false;
+  clearInterval(timerInterval);
+  document.getElementById('timer-habit-name').textContent = name;
+  document.getElementById('timer-subtitle').textContent = '自由計時';
+  document.getElementById('timer-hint').textContent = '計時 2 分鐘後可領取金幣';
+  document.getElementById('timer-display').textContent = '0:00';
+  document.getElementById('timer-ring-progress').style.strokeDashoffset = CIRCUMFERENCE;
+  document.getElementById('timer-early-btn').textContent = '領取金幣';
+  document.getElementById('timer-early-btn').style.display = 'none';
+  const btn = document.getElementById('timer-main-btn');
+  btn.textContent = '▶';
+  btn.style.background = '#2EAD5C';
+  btn.onclick = toggleTimer;
+  document.getElementById('timer-overlay').classList.remove('milestone');
+  document.getElementById('timer-overlay').classList.add('open');
+}
+
 // ===== COIN MODAL =====
 function openCoinModal() {
   document.getElementById('coin-modal-balance').textContent = (data.totalCoins || 0).toLocaleString();
   renderShop();
+  freeTimerSelectedTag = null;
+  renderFreeTimerTags();
+  const input = document.getElementById('free-timer-input');
+  if (input) input.value = '';
   document.getElementById('coin-modal-overlay').classList.add('open');
 }
 
@@ -3303,6 +3448,7 @@ function deleteShopItem(itemId) {
 function cancelTimer() {
   clearInterval(timerInterval);
   timerRunning = false;
+  timerMode = 'habit';
   const overlay = document.getElementById('timer-overlay');
   overlay.classList.remove('open');
   overlay.classList.remove('milestone');
