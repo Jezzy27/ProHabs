@@ -2886,6 +2886,7 @@ let timerGoalReached = false;
 let timer2minNotified = false;
 let timerMode = 'habit'; // 'habit' | 'free'
 let freeTimerSelectedTag = null;
+let timerStartWallTime = 0; // Date.now() when timer last started, adjusted for already-elapsed secs
 
 function openTimer(habitId, habitName, targetSecs, targetLabel) {
   timerHabitId = habitId;
@@ -2918,6 +2919,7 @@ function toggleTimer() {
     btn.textContent = '▶';
     btn.style.background = '#2EAD5C';
   } else {
+    timerStartWallTime = Date.now() - timerElapsed * 1000;
     timerRunning = true;
     btn.textContent = '⏸';
     btn.style.background = 'rgba(255,255,255,0.12)';
@@ -2926,7 +2928,7 @@ function toggleTimer() {
 }
 
 function timerTick() {
-  timerElapsed++;
+  timerElapsed = Math.floor((Date.now() - timerStartWallTime) / 1000);
   const progress = timerMode === 'free'
     ? Math.min(timerElapsed / 3600, 1)
     : (timerTargetSecs > 0 ? Math.min(timerElapsed / timerTargetSecs, 1) : 0);
@@ -3473,6 +3475,11 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 // Enter key for inputs
 document.getElementById('new-habit-name').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
 document.getElementById('settings-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveHabitSettings(); });
+
+// 手機螢幕解鎖後立即同步計時器
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && timerRunning) timerTick();
+});
 
 // Init
 checkMonthlySettlement();
