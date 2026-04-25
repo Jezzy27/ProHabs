@@ -3114,11 +3114,11 @@ function timerTick() {
     `${m}:${String(s).padStart(2, '0')}`;
   // 解鎖按鈕：自由計時固定 2 分鐘解鎖；習慣計時依目標
   const unlockAt = (timerMode === 'free' || timerTargetSecs === 0 || timerTargetSecs >= 120) ? 120 : timerTargetSecs;
-  if (timerElapsed === unlockAt) {
+  if (timerElapsed >= unlockAt) {
     document.getElementById('timer-early-btn').style.display = 'block';
   }
   // 兩分鐘里程碑
-  if (!timer2minNotified && timerElapsed === 120) {
+  if (!timer2minNotified && timerElapsed >= 120) {
     timer2minNotified = true;
     document.getElementById('timer-overlay').classList.add('milestone');
     if (timerMode !== 'free' && timerTargetSecs > 120) {
