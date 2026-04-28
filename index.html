@@ -88,6 +88,45 @@
   .earn-rule-sub { font-size: 11px; color: rgba(0,0,0,0.35); margin-top: 2px; }
   .earn-rule-amount { font-size: 13px; font-weight: 700; color: rgba(146,104,10,0.6); white-space: nowrap; margin-left: 12px; }
 
+  /* 首頁自由計時按鈕 */
+  .free-timer-fab {
+    width: 36px; height: 36px; border-radius: 99px;
+    background: #F0F0F0; border: none; cursor: pointer;
+    font-size: 22px; color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+    font-weight: 300; transition: background 0.15s;
+  }
+  .free-timer-fab:active { background: #E0E0E0; }
+
+  /* 自由計時 Mini Modal */
+  .ft-modal-overlay {
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(0,0,0,0.45); display: flex; align-items: flex-end;
+    justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .ft-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .ft-modal {
+    background: #FAFAFA; border-radius: 28px 28px 0 0; width: 100%; max-width: 430px;
+    padding: 0 20px 40px;
+    transform: translateY(40px); transition: transform 0.3s ease;
+  }
+  .ft-modal-overlay.open .ft-modal { transform: translateY(0); }
+  .ft-modal-handle { width: 36px; height: 4px; background: #DDD; border-radius: 2px; margin: 14px auto 12px; }
+  .ft-modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-align: center; }
+
+  /* 金幣 Modal Tabs */
+  .coin-modal-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #F0EDE8; padding: 0 20px; margin-top: 4px;
+  }
+  .coin-modal-tab {
+    flex: 1; padding: 12px 0; font-size: 14px; font-weight: 600;
+    color: var(--text-sub); background: none; border: none; cursor: pointer;
+    border-bottom: 2.5px solid transparent; margin-bottom: -1px; font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .coin-modal-tab.active { color: #92680A; border-bottom-color: #F0C630; }
+  .coin-modal-tab-panel { display: none; }
+  .coin-modal-tab-panel.active { display: block; }
+
   /* 自由計時 */
   .free-timer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
   .free-timer-tag {
@@ -265,7 +304,22 @@
   .progress-fill { height: 100%; background: #FFC200; border-radius: 99px; transition: width 0.4s ease, background-color 0.4s ease; }
 
   /* Chain group */
-  .chain-group { margin: 0 16px 12px; }
+  .chain-group {
+    margin: 0 16px 12px;
+    padding-left: 14px;
+    position: relative;
+  }
+  .chain-group::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 36px;
+    bottom: 10px;
+    width: 3px;
+    background: var(--primary);
+    opacity: 0.3;
+    border-radius: 2px;
+  }
   /* Standalone habit/pair cards on today page get same side margins as chain groups */
   #today-list > .habit-card,
   #today-list > .pair-card {
@@ -376,7 +430,7 @@
   /* Arrow connector */
   .chain-arrow {
     display: flex; justify-content: center; align-items: center;
-    margin: -2px 0 2px 18px; color: var(--primary); opacity: 0.5;
+    margin: -2px 0 2px 0; color: var(--primary); opacity: 0.5;
   }
 
   /* Chain complete celebration */
@@ -1010,9 +1064,12 @@
 <div class="page active" id="page-today">
   <div class="header">
     <div class="header-text"><h1>ProHabs</h1></div>
-    <div class="coin-display" id="coin-display" onclick="openCoinModal()">
-      <img src="dollar.png" alt="coin" style="width:22px;height:22px;">
-      <span id="coin-total">0</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="free-timer-fab" onclick="openFreeTimerModal()" title="自由計時">＋</button>
+      <div class="coin-display" id="coin-display" onclick="openCoinModal()">
+        <img src="dollar.png" alt="coin" style="width:22px;height:22px;">
+        <span id="coin-total">0</span>
+      </div>
     </div>
   </div>
   <div class="date-nav-bar">
@@ -1246,6 +1303,17 @@
   </div>
 </div>
 
+<!-- 自由計時 Mini Modal -->
+<div class="ft-modal-overlay" id="ft-modal-overlay" onclick="closeFreeTimerModal()">
+  <div class="ft-modal" onclick="event.stopPropagation()">
+    <div class="ft-modal-handle"></div>
+    <div class="ft-modal-title">自由計時</div>
+    <div class="free-timer-tags" id="free-timer-tags"></div>
+    <input class="free-timer-input" id="free-timer-input" placeholder="活動名稱（選填）" maxlength="20">
+    <button class="free-timer-start-btn" onclick="startFreeTimer()">開始計時 · 1 金幣/分鐘</button>
+  </div>
+</div>
+
 <!-- 金幣 Modal -->
 <div class="coin-modal-overlay" id="coin-modal-overlay" onclick="closeCoinModal()">
   <div class="coin-modal" onclick="event.stopPropagation()">
@@ -1255,29 +1323,29 @@
       <div class="coin-modal-balance-label"><img src="dollar.png" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;">累積金幣</div>
     </div>
 
-    <div class="coin-modal-section">
-      <div class="coin-modal-section-title">我的商店</div>
-      <div id="shop-items-list"></div>
-      <button class="add-shop-btn" onclick="openAddShopItem()">＋ 新增商品</button>
+    <div class="coin-modal-tabs">
+      <button class="coin-modal-tab active" id="coin-tab-shop" onclick="switchCoinTab('shop')">🛍️ 商店</button>
+      <button class="coin-modal-tab" id="coin-tab-earn" onclick="switchCoinTab('earn')">💰 賺幣方式</button>
     </div>
 
-    <div class="coin-modal-section">
-      <div class="coin-modal-section-title">自由計時</div>
-      <div class="free-timer-tags" id="free-timer-tags"></div>
-      <input class="free-timer-input" id="free-timer-input" placeholder="活動名稱（選填）" maxlength="20">
-      <button class="free-timer-start-btn" onclick="startFreeTimer()">開始計時 · 1 金幣/分鐘</button>
+    <div class="coin-modal-tab-panel active" id="coin-panel-shop">
+      <div class="coin-modal-section">
+        <div id="shop-items-list"></div>
+        <button class="add-shop-btn" onclick="openAddShopItem()">＋ 新增商品</button>
+      </div>
     </div>
 
-    <div class="coin-modal-section">
-      <div class="coin-modal-section-title">賺幣方式</div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">打勾一格</div><div class="earn-rule-sub">每打勾一個習慣格子</div></div><div class="earn-rule-amount">+10 金幣</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 金幣</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 金幣</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 金幣</div></div><div class="earn-rule-amount">1 金幣/分</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">連續里程碑</div><div class="earn-rule-sub">3天 +10｜7天 +30｜14天 +80<br>30天 +200｜60天 +500｜100天 +1000</div></div><div class="earn-rule-amount">各一次</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 金幣</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 金幣</div></div>
-      <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500 金幣</div></div><div class="earn-rule-amount">每月</div></div>
+    <div class="coin-modal-tab-panel" id="coin-panel-earn">
+      <div class="coin-modal-section">
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">打勾一格</div><div class="earn-rule-sub">每打勾一個習慣格子</div></div><div class="earn-rule-amount">+10 金幣</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日全部完成</div><div class="earn-rule-sub">當天所有習慣 100% 完成</div></div><div class="earn-rule-amount">+50 金幣</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">今日完成 80% 以上</div><div class="earn-rule-sub">當天完成率達 80–99%</div></div><div class="earn-rule-amount">+20 金幣</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">計時打卡</div><div class="earn-rule-sub">每分鐘獲得 1 金幣</div></div><div class="earn-rule-amount">1 金幣/分</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">連續里程碑</div><div class="earn-rule-sub">3天 +10｜7天 +30｜14天 +80<br>30天 +200｜60天 +500｜100天 +1000</div></div><div class="earn-rule-amount">各一次</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">完美一週</div><div class="earn-rule-sub">週一到週日全部完成</div></div><div class="earn-rule-amount">+150 金幣</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">翻身獎勵</div><div class="earn-rule-sub">中斷 3 天以上後重新完成</div></div><div class="earn-rule-amount">+15 金幣</div></div>
+        <div class="earn-rule-item"><div class="earn-rule-left"><div class="earn-rule-label">月底結算</div><div class="earn-rule-sub">60%+ 得 100｜80%+ 得 250｜95%+ 得 500 金幣</div></div><div class="earn-rule-amount">每月</div></div>
+      </div>
     </div>
 
   </div>
@@ -1452,6 +1520,7 @@ async function startApp() {
   renderToday();
   updateCoinDisplay();
   initCoinModalSwipe();
+  initFreeTimerModalSwipe();
   syncFromCloud();
   // 顯示帳號 email 在設定頁
   const { data: { user } } = await sb.auth.getUser();
@@ -3423,7 +3492,7 @@ function startFreeTimer() {
   const input = document.getElementById('free-timer-input');
   const name = (input ? input.value.trim() : '') || freeTimerSelectedTag || '自由計時';
   timerMode = 'free';
-  closeCoinModal();
+  closeFreeTimerModal();
   timerHabitId = null;
   timerTargetSecs = 0;
   timerTargetLabel = '';
@@ -3447,14 +3516,31 @@ function startFreeTimer() {
   document.getElementById('timer-overlay').classList.add('open');
 }
 
-// ===== COIN MODAL =====
-function openCoinModal() {
-  document.getElementById('coin-modal-balance').textContent = (data.totalCoins || 0).toLocaleString();
-  renderShop();
+// ===== FREE TIMER MODAL =====
+function openFreeTimerModal() {
   freeTimerSelectedTag = null;
   renderFreeTimerTags();
   const input = document.getElementById('free-timer-input');
   if (input) input.value = '';
+  document.getElementById('ft-modal-overlay').classList.add('open');
+}
+
+function closeFreeTimerModal() {
+  document.getElementById('ft-modal-overlay').classList.remove('open');
+}
+
+// ===== COIN MODAL =====
+function switchCoinTab(tab) {
+  ['shop', 'earn'].forEach(t => {
+    document.getElementById('coin-tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('coin-panel-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function openCoinModal() {
+  document.getElementById('coin-modal-balance').textContent = (data.totalCoins || 0).toLocaleString();
+  renderShop();
+  switchCoinTab('shop');
   document.getElementById('coin-modal-overlay').classList.add('open');
 }
 
@@ -3469,6 +3555,16 @@ function initCoinModalSwipe() {
   modal.addEventListener('touchend', e => {
     const dy = e.changedTouches[0].clientY - startY;
     if (modal.scrollTop === 0 && dy > 80) closeCoinModal();
+  }, { passive: true });
+}
+
+function initFreeTimerModalSwipe() {
+  const modal = document.querySelector('#ft-modal-overlay .ft-modal');
+  let startY = 0;
+  modal.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  modal.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 80) closeFreeTimerModal();
   }, { passive: true });
 }
 
