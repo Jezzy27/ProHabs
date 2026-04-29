@@ -2606,17 +2606,34 @@ function onDragMove(e) {
   const isStandalone = !dragHabit?.chain;
 
   if (isStandalone) {
-    // Standalone item: indicator moves at #manage-list level (between chain sections / standalone items)
     const manageList = document.getElementById('manage-list');
-    const chainSection = elBelow.closest('.chain-section');
-    const standaloneItem = elBelow.closest('.manage-item:not(.dragging)');
-    const topLevelTarget = chainSection || (standaloneItem && standaloneItem.parentNode === manageList ? standaloneItem : null);
-    if (topLevelTarget) {
-      const rect = topLevelTarget.getBoundingClientRect();
-      if (touch.clientY < rect.top + rect.height / 2) {
-        manageList.insertBefore(indicator, topLevelTarget);
+    const targetInnerList = elBelow.closest('.chain-inner-list');
+
+    if (targetInnerList) {
+      // Finger is inside a chain — drop into that chain
+      const targetItem = elBelow.closest('.manage-item:not(.dragging)');
+      if (targetItem && targetItem.parentNode === targetInnerList) {
+        const targetRect = targetItem.getBoundingClientRect();
+        if (touch.clientY < targetRect.top + targetRect.height / 2) {
+          targetInnerList.insertBefore(indicator, targetItem);
+        } else {
+          targetInnerList.insertBefore(indicator, targetItem.nextSibling);
+        }
       } else {
-        manageList.insertBefore(indicator, topLevelTarget.nextSibling);
+        targetInnerList.appendChild(indicator);
+      }
+    } else {
+      // Standalone item: indicator moves at #manage-list level
+      const chainSection = elBelow.closest('.chain-section');
+      const standaloneItem = elBelow.closest('.manage-item:not(.dragging)');
+      const topLevelTarget = chainSection || (standaloneItem && standaloneItem.parentNode === manageList ? standaloneItem : null);
+      if (topLevelTarget) {
+        const rect = topLevelTarget.getBoundingClientRect();
+        if (touch.clientY < rect.top + rect.height / 2) {
+          manageList.insertBefore(indicator, topLevelTarget);
+        } else {
+          manageList.insertBefore(indicator, topLevelTarget.nextSibling);
+        }
       }
     }
   } else {

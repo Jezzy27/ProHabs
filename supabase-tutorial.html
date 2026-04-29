@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>ProHabs × Supabase 整合教學</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Noto Sans TC", sans-serif;
+    font-size: 15px; line-height: 1.8;
+    color: #1a1a1a; background: #fff;
+    max-width: 780px; margin: 0 auto; padding: 48px 40px;
+  }
+  h1 { font-size: 28px; font-weight: 800; color: #1A3D2B; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: #888; margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 700; color: #1A3D2B; margin: 40px 0 12px;
+       padding-bottom: 6px; border-bottom: 2px solid #E8F8EE; }
+  h3 { font-size: 16px; font-weight: 700; color: #2EAD5C; margin: 24px 0 8px; }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  code {
+    background: #F3F4F6; border-radius: 4px;
+    padding: 1px 6px; font-size: 13px; font-family: monospace; color: #374151;
+  }
+  pre {
+    background: #1A3D2B; color: #A7F3D0; border-radius: 12px;
+    padding: 18px 20px; margin: 14px 0; overflow-x: auto;
+    font-size: 13px; font-family: monospace; line-height: 1.7;
+  }
+  table {
+    width: 100%; border-collapse: collapse; margin: 14px 0;
+    font-size: 14px;
+  }
+  th {
+    background: #E8F8EE; color: #1A3D2B; font-weight: 700;
+    padding: 10px 14px; text-align: left; border: 1px solid #C6E9D4;
+  }
+  td { padding: 9px 14px; border: 1px solid #E5E7EB; }
+  tr:nth-child(even) td { background: #F9FAFB; }
+  .blockquote {
+    border-left: 4px solid #2EAD5C; background: #F0FDF4;
+    padding: 12px 16px; border-radius: 0 8px 8px 0;
+    margin: 14px 0; font-size: 14px; color: #374151;
+  }
+  .blockquote strong { color: #1A3D2B; }
+  .toc {
+    background: #F9FAFB; border: 1px solid #E5E7EB;
+    border-radius: 12px; padding: 20px 24px; margin-bottom: 36px;
+  }
+  .toc-title { font-weight: 700; font-size: 14px; color: #888; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .toc ol { margin: 0; }
+  .toc li { font-size: 14px; margin-bottom: 4px; color: #1A3D2B; font-weight: 500; }
+  .diagram {
+    background: #F9FAFB; border: 1px solid #E5E7EB;
+    border-radius: 12px; padding: 20px; margin: 14px 0;
+    font-family: monospace; font-size: 13px; white-space: pre; line-height: 1.8;
+  }
+  .badge {
+    display: inline-block; background: #E8F8EE; color: #2EAD5C;
+    font-size: 12px; font-weight: 700; padding: 2px 8px;
+    border-radius: 99px; margin-right: 4px;
+  }
+  .summary-box {
+    background: #1A3D2B; color: #A7F3D0; border-radius: 14px;
+    padding: 24px 28px; margin-top: 40px;
+  }
+  .summary-box h2 { color: #fff; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 17px; margin-top: 0; }
+  .summary-box p { color: #D1FAE5; margin-bottom: 6px; font-size: 14px; }
+  @media print {
+    body { padding: 24px 32px; }
+    pre { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .summary-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<h1>ProHabs × Supabase 整合教學</h1>
+<div class="subtitle">給完全新手的雲端同步 + 登入系統說明文件 · 2026年4月</div>
+
+<div class="toc">
+  <div class="toc-title">目錄</div>
+  <ol>
+    <li>我們在解決什麼問題？</li>
+    <li>Supabase 是什麼？</li>
+    <li>今天做了哪些事？</li>
+    <li>背後怎麼運作的？</li>
+    <li>資料安全怎麼保護的？</li>
+    <li>離線怎麼辦？</li>
+    <li>整體架構總結</li>
+    <li>常見誤解澄清（Site URL、換平台、程式碼外流）</li>
+  </ol>
+</div>
+
+
+<h2>1. 我們在解決什麼問題？</h2>
+
+<p>改造前，ProHabs 的習慣資料存在瀏覽器的 <code>localStorage</code>。你可以把它想像成<strong>瀏覽器裡的一個小抽屜</strong>，只屬於那台裝置上的那個瀏覽器。</p>
+
+<table>
+  <tr><th>問題</th><th>說明</th></tr>
+  <tr><td>換裝置資料消失</td><td>手機的抽屜 ≠ 電腦的抽屜，各存各的</td></tr>
+  <tr><td>清除瀏覽器資料就沒了</td><td>抽屜被清空了，資料永遠不見</td></tr>
+  <tr><td>朋友無法使用</td><td>朋友有自己的抽屜，不是你的資料</td></tr>
+  <tr><td>沒有登入保護</td><td>任何人打開連結都能直接進入 App</td></tr>
+</table>
+
+<p><strong>改造後：</strong>資料存在雲端（Supabase），就像<strong>一個需要鑰匙才能開的雲端保險箱</strong>，任何裝置用同一個帳號登入，都能拿到同一份資料。</p>
+
+
+<h2>2. Supabase 是什麼？</h2>
+
+<p>Supabase 是一個「後端即服務（BaaS）」平台，免費提供你原本需要自己架設伺服器才能做到的功能。它幫你同時解決兩件事：</p>
+
+<h3>🔐 Auth（身份驗證）</h3>
+<div class="blockquote"><strong>類比：</strong>就像大樓的門禁系統，只有有感應卡的住戶才能進去，訪客不能隨便進門。</div>
+
+<p>Supabase Auth 幫你管理「誰可以登入」，你完全不需要自己寫登入邏輯。它處理：</p>
+<ul>
+  <li>帳號密碼的儲存（密碼是加密的，連你自己在後台也看不到明文）</li>
+  <li>登入 / 登出 / Session 管理</li>
+  <li>邀請新用戶（發邀請信）</li>
+  <li>Token 發放（登入成功後的通行證）</li>
+</ul>
+
+<h3>🗄️ Database（資料庫）</h3>
+<div class="blockquote"><strong>類比：</strong>就像 Google 試算表，但更安全、更快，而且可以用程式碼直接讀寫。</div>
+
+<p>Supabase 使用 PostgreSQL 資料庫。我們為 ProHabs 建了這樣一張表：</p>
+
+<div class="diagram">user_data 表
+┌─────────────────────┬─────────────────────────┬──────────────────┐
+│ user_id             │ data                    │ updated_at       │
+├─────────────────────┼─────────────────────────┼──────────────────┤
+│ 你的帳號 ID          │ 你所有的習慣資料 (JSON)  │ 最後更新時間      │
+│ 朋友A 的帳號 ID      │ 朋友A 的習慣資料         │ 最後更新時間      │
+│ 朋友B 的帳號 ID      │ 朋友B 的習慣資料         │ 最後更新時間      │
+└─────────────────────┴─────────────────────────┴──────────────────┘</div>
+
+<p>每個人一行，資料完全獨立。</p>
+
+
+<h2>3. 今天做了哪些事？</h2>
+
+<h3>Step 1：建立 Supabase 專案</h3>
+<p>就像去銀行開戶。建好後拿到兩個重要資訊：</p>
+<table>
+  <tr><th>項目</th><th>說明</th><th>類比</th></tr>
+  <tr><td><code>Project URL</code></td><td>你的 Supabase 雲端地址</td><td>銀行的地址</td></tr>
+  <tr><td><code>Anon Key</code></td><td>App 連接 Supabase 的公開金鑰</td><td>進銀行大廳的門卡（公開沒關係，進了還要自己的密碼才能開格子）</td></tr>
+</table>
+
+<h3>Step 2：建資料表 + 安全規則</h3>
+<p>在 Supabase SQL Editor 執行：</p>
+<pre>-- 建一張表，每個用戶存一行
+create table user_data (
+  user_id    uuid references auth.users primary key,
+  data       jsonb not null default '{}',
+  updated_at timestamptz default now()
+);
+
+-- 開啟 Row Level Security（每人只能看自己的資料）
+alter table user_data enable row level security;
+
+-- 定義規則：user_id 必須等於目前登入的人
+create policy "own data only" on user_data
+  for all using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);</pre>
+
+<h3>Step 3：改 App 程式碼</h3>
+<table>
+  <tr><th>改了什麼</th><th>效果</th></tr>
+  <tr><td>加入 Supabase JS SDK</td><td>App 可以跟 Supabase 溝通</td></tr>
+  <tr><td>加登入頁面</td><td>進 App 前先驗證身份</td></tr>
+  <tr><td>加設定密碼頁面</td><td>朋友收到邀請信後可以設定自己的密碼</td></tr>
+  <tr><td>改造 <code>saveData()</code></td><td>打卡時同時存本地 + 推雲端</td></tr>
+  <tr><td>加 <code>syncFromCloud()</code></td><td>開 App 時從雲端拉最新資料</td></tr>
+  <tr><td>設定頁加登出按鈕</td><td>可以切換帳號</td></tr>
+</table>
+
+<h3>Step 4：關閉公開註冊</h3>
+<p>在 Supabase → Authentication → Sign In / Providers → 關掉「Allow new users to sign up」。</p>
+<p>之後只有你在 Dashboard 手動建立或邀請的帳號才能登入，陌生人就算打開 App 也無法自己申請帳號。</p>
+
+<h3>Step 5：設定邀請連結的導向網址</h3>
+<p>Authentication → URL Configuration → Site URL 改成你的 GitHub Pages 網址，這樣朋友收到邀請信點連結才會正確導向 App，而不是 localhost。</p>
+
+
+<h2>4. 背後怎麼運作的？</h2>
+
+<h3>登入流程</h3>
+<div class="diagram">你輸入 Email + 密碼
+        ↓
+Supabase 驗證帳密是否正確
+        ↓
+  ✅ 正確 → 發給你一個 Token（通行證）存在瀏覽器裡
+  ❌ 錯誤 → 顯示「帳號或密碼錯誤」
+        ↓
+下次打開 App → 自動帶上 Token → 不需要重新登入</div>
+
+<div class="blockquote"><strong>類比：</strong>Token 就像演唱會的手環，戴著它在會場裡可以自由進出，不需要每次都出示票根。Token 有效期限約一週，過期需要重新登入。</div>
+
+<h3>資料同步流程</h3>
+
+<p><span class="badge">打卡時</span></p>
+<div class="diagram">你打勾一個習慣
+      ↓
+① 立刻存到 localStorage（本地，毫秒內完成）
+② 非同步推送到 Supabase（雲端，背景執行，不影響操作）</div>
+
+<p><span class="badge">開 App 時</span></p>
+<div class="diagram">App 啟動
+    ↓
+先從 localStorage 讀資料（速度快，離線也能用，畫面馬上顯示）
+    ↓
+同時向 Supabase 請求最新資料
+    ↓
+雲端資料回來後 → 更新畫面（若有更新才重新渲染）</div>
+
+<h3>邀請朋友流程</h3>
+<div class="diagram">你在 Supabase Dashboard → Invite user → 輸入朋友 Email
+      ↓
+Supabase 自動寄出邀請信給朋友
+      ↓
+朋友點信中的連結 → 導向 ProHabs App
+      ↓
+App 偵測到邀請 Token → 顯示「設定密碼」頁面
+      ↓
+朋友設定密碼 → 自動登入 → 進入 App</div>
+
+
+<h2>5. 資料安全怎麼保護的？</h2>
+
+<h3>Row Level Security（RLS）</h3>
+<div class="blockquote"><strong>類比：</strong>銀行的保險箱大廳人人可以進（Anon Key），但每個格子都有獨立的鎖，只有鑰匙（你的帳號）才能開自己的格子，銀行員工也不能替你開別人的。</div>
+
+<p>我們設定的規則翻譯成白話：</p>
+<pre>-- 只有「目前登入的用戶」才能存取「user_id 等於自己」的那一行
+auth.uid() = user_id</pre>
+
+<table>
+  <tr><th>情境</th><th>結果</th></tr>
+  <tr><td>你登入，查自己的資料</td><td>✅ 可以</td></tr>
+  <tr><td>你登入，嘗試查朋友的資料</td><td>❌ 資料庫直接擋住，不回傳任何資料</td></tr>
+  <tr><td>沒登入，查任何人的資料</td><td>❌ 全部擋住</td></tr>
+  <tr><td>有人拿到 Anon Key，不登入直接查</td><td>❌ RLS 規則擋住</td></tr>
+</table>
+
+<h3>Anon Key 放在程式碼裡安全嗎？</h3>
+<p>Anon Key 是公開設計的，它只代表「這個請求來自 ProHabs App」，本身沒有任何特殊權限。真正保護資料的是 RLS 規則，就算有人拿到這把 Key，沒有你的帳號密碼，依然看不到任何資料。</p>
+
+<div class="blockquote"><strong>類比：</strong>Anon Key 就像一棟大樓的地址，知道地址可以走進大廳，但進不了任何一間住戶的門。</div>
+
+
+<h2>6. 離線怎麼辦？</h2>
+
+<p>我們用的是「<strong>離線優先（Offline First）</strong>」設計策略：</p>
+
+<table>
+  <tr><th>狀況</th><th>行為</th></tr>
+  <tr><td>有網路打卡</td><td>存 localStorage + 推 Supabase（兩份都存）</td></tr>
+  <tr><td>沒網路打卡</td><td>只存 localStorage（先記下來）</td></tr>
+  <tr><td>網路恢復</td><td>自動把 localStorage 的最新狀態推上 Supabase</td></tr>
+  <tr><td>App 切回前景</td><td>自動觸發一次同步</td></tr>
+</table>
+
+<div class="blockquote"><strong>類比：</strong>就像 Google 文件的離線模式，沒網路繼續編輯，有網路時自動幫你上傳。你永遠不會因為沒網路而無法使用 App。</div>
+
+
+<h2>7. 整體架構總結</h2>
+
+<div class="diagram">你的手機 / 電腦 / 任何裝置
+           ↕
+       ProHabs App
+       (index.html)
+           ↕  ← Supabase JS SDK（橋樑）
+       Supabase 雲端
+       ├── Auth（門禁系統）
+       │    ├── 你的帳號
+       │    └── 朋友的帳號
+       └── Database（保險箱）
+            └── user_data 表
+                 ├── 你的習慣資料（只有你能看）
+                 └── 朋友的習慣資料（只有朋友能看）</div>
+
+<p>每個人用自己的帳號登入 → 只拿到屬於自己的資料 → 任何裝置都同步 ✅</p>
+
+
+<h2>8. 常見誤解澄清</h2>
+
+<h3>❌ 誤解：「Supabase 會去抓我的 HTML」</h3>
+<p>很多人以為填了 Site URL 之後，Supabase 就會去「讀取」你的網頁。<strong>完全不是這樣！</strong></p>
+<p>實際上是<strong>反過來的</strong>：是你的 App 主動去找 Supabase，不是 Supabase 去找你的 App。</p>
+
+<div class="diagram">❌ 錯誤理解：
+Supabase ──找──→ 你的 App (GitHub Pages)
+
+✅ 正確理解：
+你的 App (GitHub Pages) ──找──→ Supabase</div>
+
+<p>你的程式碼裡有這兩行，這就是 App「知道去哪裡找 Supabase」的原因：</p>
+<pre>const SUPABASE_URL = 'https://owoqbbghsjwnhvvtizqn.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_...'</pre>
+<p>Supabase 完全不知道你的 GitHub Pages 網址是什麼，它只是在那邊等你的 App 來連線。</p>
+
+<h3>那 Site URL 是幹嘛的？</h3>
+<div class="blockquote"><strong>Site URL 的唯一用途：</strong>決定邀請信 / 重設密碼信裡面的連結要導向哪裡。</div>
+
+<p>當你發邀請給朋友，Supabase 寄出的信裡有一個連結，點了要帶朋友去哪個網址？就是 Site URL 決定的。</p>
+
+<table>
+  <tr><th>情境</th><th>Site URL 的影響</th></tr>
+  <tr><td>填 localhost</td><td>朋友點連結 → 導向 localhost → 手機打不開（錯誤）</td></tr>
+  <tr><td>填 GitHub Pages 網址</td><td>朋友點連結 → 導向你的 App → 正常顯示設定密碼頁面 ✅</td></tr>
+  <tr><td>換到 Vercel 後更新</td><td>之後寄出的信連結就會指向新的 Vercel 網址</td></tr>
+</table>
+
+<p><strong>結論：Site URL 只跟「信件連結」有關，跟資料同步完全無關。</strong></p>
+
+<h3>換部署平台需要改什麼？</h3>
+<p>假設你從 GitHub Pages 換到 Vercel，你只需要：</p>
+<ol>
+  <li>把程式碼部署到 Vercel，拿到新的網址（例如 <code>https://prohabs.vercel.app</code>）</li>
+  <li>去 Supabase → Authentication → URL Configuration → 更新 Site URL</li>
+  <li>完成。資料完全不受影響，因為資料在 Supabase，不在部署平台。</li>
+</ol>
+
+<div class="blockquote"><strong>類比：</strong>Supabase 是倉庫，GitHub Pages / Vercel / Netlify 是店面。你換店面地址，不影響倉庫裡的貨。只需要把新地址告訴快遞公司（更新 Site URL），讓他們知道把包裹（邀請信連結）送到新地址。</div>
+
+<h3>GitHub Pages 程式碼公開的問題</h3>
+<p>GitHub Pages 必須用 Public repo，代表任何人都能看到你的程式碼，包含 Supabase URL 和 Anon Key。</p>
+
+<table>
+  <tr><th>方案</th><th>程式碼是否公開</th><th>說明</th></tr>
+  <tr><td>GitHub Pages</td><td>✅ 公開</td><td>免費，但 repo 必須 public</td></tr>
+  <tr><td>Vercel</td><td>❌ 不公開</td><td>免費，可連接 private repo</td></tr>
+  <tr><td>Netlify</td><td>❌ 不公開</td><td>免費，可連接 private repo</td></tr>
+</table>
+
+<p>如果介意程式碼外流，可以把 GitHub repo 改成 Private，然後用 Vercel 或 Netlify 部署。這兩個平台都能連接 private repo，免費方案也夠個人使用。</p>
+
+
+<div class="summary-box">
+  <h2>一句話總結</h2>
+  <p>我們把 ProHabs 從「存在瀏覽器小抽屜」升級成「需要鑰匙才能開的雲端保險箱」，</p>
+  <p>任何裝置登入都能拿到同一份資料，沒帳號的人打開也只會看到登入頁面。</p>
+  <p>記住最重要的一點：<strong style="color:#6EE7B7;">是 App 找 Supabase，不是 Supabase 找 App。</strong></p>
+  <p style="margin-top:14px; color:#6EE7B7; font-size:13px;">本文件由 Claude + ProHabs 開發過程整理</p>
+</div>
+
+</body>
+</html>
