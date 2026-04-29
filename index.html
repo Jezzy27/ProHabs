@@ -2640,7 +2640,7 @@ function onDragMove(e) {
     // Chain habit: can move within its chain-inner-list OR out to #manage-list (to become standalone)
     const manageList = document.getElementById('manage-list');
     const targetInnerList = elBelow.closest('.chain-inner-list');
-    const myInnerList = item.closest('.chain-inner-list');
+    const myInnerList = dragState.item.closest('.chain-inner-list');
 
     if (targetInnerList && targetInnerList === myInnerList) {
       // Reordering within the same chain
